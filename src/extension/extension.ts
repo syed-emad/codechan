@@ -1,13 +1,13 @@
 import * as vscode from "vscode";
-import { ClippyChanViewProvider } from "./providers";
+import { CodeChanViewProvider } from "./providers";
 import { TriggerManager } from "./triggers";
 
-const SIDEBAR_VIEW = "clippy-chan.sidebar";
-const PANEL_VIEW = "clippy-chan.bottomPanel";
+const SIDEBAR_VIEW = "code-chan.sidebar";
+const PANEL_VIEW = "code-chan.bottomPanel";
 
 export function activate(context: vscode.ExtensionContext) {
-  const sidebarProvider = new ClippyChanViewProvider(context.extensionUri, SIDEBAR_VIEW);
-  const panelProvider = new ClippyChanViewProvider(context.extensionUri, PANEL_VIEW);
+  const sidebarProvider = new CodeChanViewProvider(context.extensionUri, SIDEBAR_VIEW);
+  const panelProvider = new CodeChanViewProvider(context.extensionUri, PANEL_VIEW);
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW, sidebarProvider),
@@ -20,6 +20,16 @@ export function activate(context: vscode.ExtensionContext) {
     panelProvider.sendMessage(text, category, mood);
   };
 
+  // Reload webview when character setting changes
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("code-chan.character")) {
+        // Trigger a reload by re-resolving the webview
+        [sidebarProvider, panelProvider].forEach((p) => p.refresh());
+      }
+    })
+  );
+
   // Wire up all triggers
   const triggers = new TriggerManager(send);
   triggers.register(context);
@@ -28,15 +38,44 @@ export function activate(context: vscode.ExtensionContext) {
   const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right, 0
   );
-  statusBarItem.text = "🧷 Clippy-Chan";
+  statusBarItem.text = "✨ Code-Chan";
   statusBarItem.tooltip = "Click for a message!";
-  statusBarItem.command = "clippy-chan.showMessage";
+  statusBarItem.command = "code-chan.showMessage";
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
 
+  // Character selector — opens quick pick like vscode-pets
+  context.subscriptions.push(
+    vscode.commands.registerCommand("code-chan.selectCharacter", async () => {
+      const characters = [
+        { label: "🧷  Clippy", description: "The classic paperclip assistant", value: "clippy" },
+        { label: "😎  Cool Cat", description: "Pixel cat with sunglasses", value: "cat" },
+      ];
+
+      const current = vscode.workspace.getConfiguration("code-chan").get<string>("character", "clippy");
+      const picks = characters.map((c) => ({
+        ...c,
+        picked: c.value === current,
+        label: c.value === current ? `${c.label}  ✓` : c.label,
+      }));
+
+      const selected = await vscode.window.showQuickPick(picks, {
+        title: "Select Code-Chan Character",
+        placeHolder: "Choose your companion",
+      });
+
+      if (selected) {
+        await vscode.workspace.getConfiguration("code-chan").update(
+          "character", selected.value, vscode.ConfigurationTarget.Global
+        );
+        vscode.window.showInformationMessage(`Code-Chan: switched to ${selected.label.replace(" ✓", "")}! Reload the panel to see your new character.`);
+      }
+    })
+  );
+
   // Manual trigger command
   context.subscriptions.push(
-    vscode.commands.registerCommand("clippy-chan.showMessage", () => {
+    vscode.commands.registerCommand("code-chan.showMessage", () => {
       const messages = [
         { text: "You're doing great! Keep coding!", mood: "happy" },
         { text: "Remember to take breaks!", mood: "thinking" },

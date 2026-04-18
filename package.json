@@ -1,21 +1,30 @@
 {
-  "name": "clippy-chan",
-  "displayName": "Clippy-Chan",
-  "description": "An animated clippy/anime companion that shows motivating and funny messages while you code",
+  "name": "code-chan",
+  "displayName": "Code-Chan",
+  "description": "Your sarcastic coding buddy. Code-Chan lives in your sidebar and roasts you while you code — reacting to saves, errors, streaks, and late nights.",
   "version": "0.1.0",
-  "publisher": "emad",
+  "publisher": "syedemad",
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.116.0"
   },
-  "categories": ["Other"],
+  "categories": ["Other", "Visualization"],
+  "keywords": ["clippy", "pet", "buddy", "fun", "motivational", "sarcastic", "companion", "ascii", "pixel"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/syedemad/code-chan"
+  },
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
   "activationEvents": ["onStartupFinished"],
   "main": "./out/extension/extension.js",
   "contributes": {
     "viewsContainers": {
       "panel": [
         {
-          "id": "clippy-chan-panel",
-          "title": "Clippy-Chan",
+          "id": "code-chan-panel",
+          "title": "Code-Chan",
           "icon": "media/icon.svg"
         }
       ]
@@ -24,24 +33,59 @@
       "explorer": [
         {
           "type": "webview",
-          "id": "clippy-chan.sidebar",
-          "name": "Clippy-Chan"
+          "id": "code-chan.sidebar",
+          "name": "Code-Chan"
         }
       ],
-      "clippy-chan-panel": [
+      "code-chan-panel": [
         {
           "type": "webview",
-          "id": "clippy-chan.bottomPanel",
-          "name": "Clippy-Chan"
+          "id": "code-chan.bottomPanel",
+          "name": "Code-Chan"
         }
       ]
     },
     "commands": [
       {
-        "command": "clippy-chan.showMessage",
-        "title": "Clippy-Chan: Show Message"
+        "command": "code-chan.showMessage",
+        "title": "Code-Chan: Show Message"
+      },
+      {
+        "command": "code-chan.selectCharacter",
+        "title": "Select Character",
+        "icon": "$(add)"
       }
-    ]
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "code-chan.selectCharacter",
+          "when": "view == code-chan.sidebar || view == code-chan.bottomPanel",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Code-Chan",
+      "properties": {
+        "code-chan.character": {
+          "type": "string",
+          "enum": ["clippy", "cat"],
+          "enumDescriptions": [
+            "Clippy — the classic paperclip assistant",
+            "Cool Cat — a pixel cat with sunglasses"
+          ],
+          "default": "clippy",
+          "description": "Which character to show in the panel"
+        },
+        "code-chan.messageFrequency": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "default": "medium",
+          "description": "How often Code-Chan sends messages"
+        }
+      }
+    }
   },
   "scripts": {
     "build": "node esbuild.mjs",

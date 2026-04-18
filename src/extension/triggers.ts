@@ -2,69 +2,85 @@ import * as vscode from "vscode";
 
 type SendMessageFn = (text: string, category: string, mood: string) => void;
 
-// Messages per trigger type
 const MESSAGES = {
   save: [
-    { text: "Saved! Your future self thanks you.", mood: "happy" },
-    { text: "Nice save. Keep that momentum going!", mood: "happy" },
-    { text: "Another save, another step forward.", mood: "idle" },
-    { text: "Ctrl+S muscle memory is the real skill.", mood: "happy" },
-    { text: "Saved! Don't forget to commit too 👀", mood: "thinking" },
+    { text: "Saved. Now pray it works.", mood: "idle" },
+    { text: "Another save. Another lie you tell yourself it's done.", mood: "thinking" },
+    { text: "Ctrl+S won't save your architecture though.", mood: "thinking" },
+    { text: "Saved! The bugs are preserved too, don't worry.", mood: "idle" },
+    { text: "Nice. File saved. Career: uncertain.", mood: "idle" },
   ],
   saveStreak5: [
-    { text: "5 saves in a row! You're in the zone!", mood: "excited" },
-    { text: "On a roll! 5 saves and counting!", mood: "excited" },
+    { text: "5 saves. You're either very productive or very paranoid.", mood: "excited" },
+    { text: "Save streak: 5. The code hasn't improved but the count has.", mood: "excited" },
   ],
   saveStreak10: [
-    { text: "10 saves! That's some serious focus.", mood: "excited" },
-    { text: "Save streak: 10! You absolute machine.", mood: "excited" },
+    { text: "10 saves in a row. Seeking help is always an option.", mood: "excited" },
+    { text: "Save #10. At this point you're just hitting Ctrl+S as a coping mechanism.", mood: "excited" },
   ],
   errorsAppeared: [
-    { text: "Uh oh, errors appeared... you got this.", mood: "sad" },
-    { text: "Red squiggles? Just VS Code being dramatic.", mood: "thinking" },
-    { text: "Errors are just undiscovered features.", mood: "thinking" },
-    { text: "Build failed? That's just 10 opportunities for growth.", mood: "sad" },
+    { text: "Oh look, errors. Your code is having a moment.", mood: "scared" },
+    { text: "Congrats, you broke it. Speedrun any%.", mood: "scared" },
+    { text: "Red squiggles: nature's way of saying 'try again'.", mood: "scared" },
+    { text: "Errors? In this economy? Yikes.", mood: "scared" },
+    { text: "The compiler called. It's disappointed.", mood: "scared" },
   ],
   errorsFixed: [
-    { text: "All errors gone! Let's gooo! 🎉", mood: "excited" },
-    { text: "Green across the board. Respect.", mood: "happy" },
-    { text: "Fixed! You're basically a wizard.", mood: "excited" },
-    { text: "Zero errors. Clean. Crisp. Beautiful.", mood: "happy" },
+    { text: "ZERO ERRORS! Quick, ship it before you touch anything else.", mood: "excited" },
+    { text: "All fixed! Now let's see how fast you break it again.", mood: "excited" },
+    { text: "Green across the board. Screenshot it — it won't last.", mood: "excited" },
+    { text: "Errors gone! You absolute legend.", mood: "excited" },
+  ],
+  errorsWhileSaving: [
+    { text: "Looks like you're fixing them quickly. I'll let you concentrate.", mood: "idle" },
+    { text: "You seem locked in on fixes. I'll stay quiet for a bit.", mood: "thinking" },
   ],
   idleReturn: [
-    { text: "Welcome back! Miss me?", mood: "excited" },
-    { text: "You're back! Ready to crush it again?", mood: "happy" },
-    { text: "Break time's over, let's get it!", mood: "happy" },
+    { text: "Oh you're back. The code missed you. I didn't.", mood: "idle" },
+    { text: "Welcome back. The bugs waited.", mood: "idle" },
+    { text: "Back already? Coffee hit different?", mood: "idle" },
+  ],
+  sleeping: [
+    { text: "...zzz... I'm not sleeping, I'm thinking with my eyes closed.", mood: "sleeping" },
+    { text: "Nothing to do. Napping. Don't @ me.", mood: "sleeping" },
+    { text: "zzzz... wake me up when there's a merge conflict.", mood: "sleeping" },
   ],
   longSession30: [
-    { text: "30 minutes in! You're in flow state.", mood: "happy" },
-    { text: "Half an hour of coding. Respect the grind.", mood: "happy" },
+    { text: "30 mins in. You and your rubber duck are really bonding.", mood: "idle" },
+    { text: "Half an hour of coding. The stack trace grows stronger.", mood: "idle" },
   ],
   longSession60: [
-    { text: "An hour in. Take a sip of water 💧", mood: "thinking" },
-    { text: "60 minutes! Stretch those wrists.", mood: "thinking" },
+    { text: "An hour. Drink water. Touch grass. Both optional but recommended.", mood: "thinking" },
+    { text: "60 minutes deep. Your back wants a lawyer.", mood: "thinking" },
   ],
   longSession90: [
-    { text: "90 minutes! Seriously, stand up for a sec.", mood: "sad" },
-    { text: "1.5 hours deep. Your back wants a word.", mood: "sad" },
+    { text: "90 minutes. Your posture has filed for divorce.", mood: "sad" },
+    { text: "1.5 hrs in. The code is running. Your body is not.", mood: "sad" },
   ],
   lateNight: [
-    { text: "It's late... your future self says sleep.", mood: "sad" },
-    { text: "Past midnight? The bugs get harder at 2am.", mood: "thinking" },
-    { text: "Night owl coding session? Respect, but hydrate.", mood: "thinking" },
+    { text: "It's late. The bugs are stronger at night. So is regret.", mood: "thinking" },
+    { text: "Past midnight coding session. Classic villain arc.", mood: "thinking" },
+    { text: "Your future self is begging you to sleep. They're crying.", mood: "sad" },
   ],
   switchFile: [
-    { text: "New file, new adventure!", mood: "happy" },
-    { text: "Context switching? Bold move.", mood: "thinking" },
-    { text: "A fresh file. Anything is possible here.", mood: "happy" },
-    { text: "Jumping between files like a pro.", mood: "excited" },
+    { text: "New file. Same energy. Different problems.", mood: "idle" },
+    { text: "Context switch detected. RAM usage: critical.", mood: "thinking" },
+    { text: "Oh, running away from that file? Bold.", mood: "thinking" },
+    { text: "New file who dis.", mood: "idle" },
   ],
+};
+
+// How often messages fire based on frequency setting
+const COOLDOWN_MS: Record<string, number> = {
+  low:    180_000, // 3 min
+  medium:  90_000, // 1.5 min
+  high:    30_000, // 30s
 };
 
 export class TriggerManager {
   private lastMessageTime = 0;
-  private readonly cooldownMs = 5_000; // 5 seconds (testing — change back to 90_000 for prod)
   private saveCount = 0;
+  private savesWhileErrors = 0;
   private prevErrorCount = 0;
   private sessionStart = Date.now();
   private lastActivityTime = Date.now();
@@ -72,6 +88,7 @@ export class TriggerManager {
   private milestonesFired = new Set<number>();
   private idleCheckInterval?: NodeJS.Timeout;
   private sessionCheckInterval?: NodeJS.Timeout;
+  private sleepTimeout?: NodeJS.Timeout;
 
   constructor(private readonly send: SendMessageFn) {}
 
@@ -81,39 +98,34 @@ export class TriggerManager {
       vscode.workspace.onDidSaveTextDocument(() => this.onSave())
     );
 
-    // Diagnostics (errors/warnings)
+    // Diagnostics
     context.subscriptions.push(
       vscode.languages.onDidChangeDiagnostics(() => this.onDiagnosticsChange())
     );
 
-    // Activity tracking for idle detection
+    // Cursor activity — tracks idle + return
     context.subscriptions.push(
-      vscode.window.onDidChangeTextEditorSelection(() => {
-        this.lastActivityTime = Date.now();
-        if (this.isIdle) {
-          this.isIdle = false;
-          this.fireMessage("idleReturn");
-        }
-      })
+      vscode.window.onDidChangeTextEditorSelection(() => this.onActivity())
     );
 
     // File switch
     context.subscriptions.push(
       vscode.window.onDidChangeActiveTextEditor((editor) => {
-        if (editor) {
-          this.lastActivityTime = Date.now();
-          this.fireMessage("switchFile");
-        }
+        if (editor) { this.onActivity(); this.fireMessage("switchFile"); }
       })
     );
 
-    // Idle check every 2 minutes
+    // Idle check every minute
     this.idleCheckInterval = setInterval(() => {
       const idleMs = Date.now() - this.lastActivityTime;
-      if (idleMs > 10 * 60_000 && !this.isIdle) {
+      if (idleMs > 3 * 60_000 && !this.isIdle) {
         this.isIdle = true;
+        // Fall asleep after 3 min idle
+        this.sleepTimeout = setTimeout(() => {
+          this.fireMessage("sleeping", true);
+        }, 500);
       }
-    }, 2 * 60_000);
+    }, 60_000);
 
     // Session milestone check every 5 minutes
     this.sessionCheckInterval = setInterval(() => this.onSessionTick(), 5 * 60_000);
@@ -122,16 +134,35 @@ export class TriggerManager {
       dispose: () => {
         clearInterval(this.idleCheckInterval);
         clearInterval(this.sessionCheckInterval);
+        clearTimeout(this.sleepTimeout);
       },
     });
   }
 
-  private onSave(): void {
-    this.saveCount++;
+  private onActivity(): void {
     this.lastActivityTime = Date.now();
+    if (this.isIdle) {
+      this.isIdle = false;
+      clearTimeout(this.sleepTimeout);
+      this.fireMessage("idleReturn");
+    }
+  }
+
+  private onSave(): void {
+    this.onActivity();
+    this.saveCount++;
+
+    // While errors are active, reduce save chatter so the user can focus.
+    if (this.prevErrorCount > 0) {
+      this.savesWhileErrors++;
+      if (this.savesWhileErrors % 5 === 0) {
+        this.fireMessage("errorsWhileSaving");
+      }
+      return;
+    }
 
     if (this.saveCount % 10 === 0) {
-      this.fireMessage("saveStreak10", true); // skip cooldown for milestones
+      this.fireMessage("saveStreak10", true);
     } else if (this.saveCount % 5 === 0) {
       this.fireMessage("saveStreak5", true);
     } else {
@@ -142,44 +173,42 @@ export class TriggerManager {
   private onDiagnosticsChange(): void {
     const errorCount = this.countErrors();
 
-    if (errorCount > this.prevErrorCount) {
+    // First error occurrence should always break through cooldown.
+    if (errorCount > 0 && this.prevErrorCount === 0) {
+      this.savesWhileErrors = 0;
+      this.fireMessage("errorsAppeared", true);
+    } else if (errorCount > this.prevErrorCount) {
       this.fireMessage("errorsAppeared");
     } else if (errorCount === 0 && this.prevErrorCount > 0) {
-      this.fireMessage("errorsFixed", true); // skip cooldown — always celebrate
+      this.savesWhileErrors = 0;
+      this.fireMessage("errorsFixed", true);
     }
-
     this.prevErrorCount = errorCount;
   }
 
   private onSessionTick(): void {
     const minutesIn = (Date.now() - this.sessionStart) / 60_000;
-
     if (minutesIn >= 90 && !this.milestonesFired.has(90)) {
-      this.milestonesFired.add(90);
-      this.fireMessage("longSession90", true);
+      this.milestonesFired.add(90); this.fireMessage("longSession90", true);
     } else if (minutesIn >= 60 && !this.milestonesFired.has(60)) {
-      this.milestonesFired.add(60);
-      this.fireMessage("longSession60", true);
+      this.milestonesFired.add(60); this.fireMessage("longSession60", true);
     } else if (minutesIn >= 30 && !this.milestonesFired.has(30)) {
-      this.milestonesFired.add(30);
-      this.fireMessage("longSession30", true);
+      this.milestonesFired.add(30); this.fireMessage("longSession30", true);
     }
-
     const hour = new Date().getHours();
-    if (hour >= 23 || hour < 4) {
-      this.fireMessage("lateNight");
-    }
+    if (hour >= 23 || hour < 4) { this.fireMessage("lateNight"); }
+  }
+
+  private getCooldown(): number {
+    const freq = vscode.workspace.getConfiguration("code-chan").get<string>("messageFrequency", "medium");
+    return COOLDOWN_MS[freq] ?? COOLDOWN_MS.medium;
   }
 
   private fireMessage(key: keyof typeof MESSAGES, skipCooldown = false): void {
     const now = Date.now();
-    if (!skipCooldown && now - this.lastMessageTime < this.cooldownMs) {
-      return;
-    }
-
+    if (!skipCooldown && now - this.lastMessageTime < this.getCooldown()) { return; }
     const pool = MESSAGES[key];
-    if (!pool || pool.length === 0) { return; }
-
+    if (!pool?.length) { return; }
     const pick = pool[Math.floor(Math.random() * pool.length)];
     this.lastMessageTime = now;
     this.send(pick.text, key, pick.mood);
@@ -187,7 +216,7 @@ export class TriggerManager {
 
   private countErrors(): number {
     let total = 0;
-    for (const uri of vscode.languages.getDiagnostics().map(([u]) => u)) {
+    for (const [uri] of vscode.languages.getDiagnostics()) {
       total += vscode.languages.getDiagnostics(uri).filter(
         (d) => d.severity === vscode.DiagnosticSeverity.Error
       ).length;

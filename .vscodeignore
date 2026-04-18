@@ -8,3 +8,5 @@ esbuild.mjs
 .gitignore
 **/*.map
 CLAUDE.md
+test-animations.html
+media/cat.png

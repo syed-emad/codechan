@@ -1,6 +1,9 @@
 declare const window: Window & {
-  CLIPPY_ANIMATIONS: Record<string, string[]>;
+  CLIPPY_ANIMATIONS: Record<string, string[] | string>;
   CLIPPY_FALLBACK: string;
+  CLIPPY_CHARACTER: string;
+  CAT_SPRITE: string;
+  IS_CAT: boolean;
 };
 
 declare function acquireVsCodeApi(): {
@@ -10,84 +13,88 @@ declare function acquireVsCodeApi(): {
 };
 
 const vscode = acquireVsCodeApi();
+const bubble  = document.getElementById("bubble")!;
+const img     = document.getElementById("character-img") as HTMLImageElement;
+const zzz     = document.getElementById("zzz")!;
 
-const bubble = document.getElementById("bubble")!;
-const img = document.getElementById("character-img") as HTMLImageElement;
+img.onerror = () => { if (window.CLIPPY_FALLBACK) { img.src = window.CLIPPY_FALLBACK; } };
 
-// Fallback to static idle if any frame fails to load
-img.onerror = () => {
-  if (window.CLIPPY_FALLBACK) {
-    img.src = window.CLIPPY_FALLBACK;
-  }
-};
-
-// ── Frame animator ────────────────────────────────────────────
+// ── Frame animator (Clippy only) ─────────────────────────────
 const FPS = 8;
-let frameIndex = 0;
 let frameTimer: number | undefined;
-let currentFrames: string[] = [];
 
-function playAnimation(mood: string, loop = true): void {
-  const anims = window.CLIPPY_ANIMATIONS ?? {};
+function playClippyAnimation(mood: string, loop: boolean): void {
+  clearInterval(frameTimer);
+  const anims = window.CLIPPY_ANIMATIONS as Record<string, string[]>;
   const frames = anims[mood] ?? anims["idle"] ?? [];
   if (!frames.length) { return; }
 
-  // Stop existing timer
-  clearInterval(frameTimer);
-
-  currentFrames = frames;
-  frameIndex = 0;
-  console.log("[clippy-chan] playing", mood, "frame[0]:", frames[0]);
   img.src = frames[0];
-
-  // Remove old mood classes, add new
-  img.className = "";
-  void img.offsetWidth; // reflow to restart animations
-  img.classList.add("pop-in");
-  setTimeout(() => {
-    img.classList.remove("pop-in");
-    if (mood === "thinking") { img.classList.add("thinking"); }
-    if (mood === "sad")      { img.classList.add("sad"); }
-  }, 260);
-
-  if (frames.length === 1) {
-    // Static frame — no timer needed
-    return;
-  }
+  let idx = 0;
+  if (frames.length === 1) { return; }
 
   frameTimer = window.setInterval(() => {
-    frameIndex++;
-    if (frameIndex >= frames.length) {
-      if (loop) {
-        frameIndex = 0;
-      } else {
-        // Animation done — go back to idle
-        clearInterval(frameTimer);
-        playAnimation("idle", true);
-        return;
-      }
+    idx++;
+    if (idx >= frames.length) {
+      if (loop) { idx = 0; } else { clearInterval(frameTimer); playClippyAnimation("idle", true); return; }
     }
-    img.src = frames[frameIndex];
+    img.src = frames[idx];
   }, 1000 / FPS);
 }
 
-// ── Message handler ───────────────────────────────────────────
+// ── CSS animator (Cat only) ───────────────────────────────────
+function playCatAnimation(mood: string): void {
+  const cssMap = window.CLIPPY_ANIMATIONS as Record<string, string>;
+  const cssClass = cssMap[mood] ?? "cat-idle";
+
+  img.src = window.CAT_SPRITE;
+  img.className = "";
+  void img.offsetWidth;
+  img.classList.add(cssClass);
+
+  // Show/hide zzz
+  if (mood === "sleeping") {
+    zzz.style.opacity = "1";
+    zzz.style.animation = "zzz-float 3s ease-in-out infinite";
+  } else {
+    zzz.style.opacity = "0";
+    zzz.style.animation = "none";
+  }
+}
+
+// ── Unified play ─────────────────────────────────────────────
+function playAnimation(mood: string, loop = true): void {
+  // Pop-in on state change (both characters)
+  img.classList.remove("pop-in");
+  void img.offsetWidth;
+  img.classList.add("pop-in");
+  setTimeout(() => img.classList.remove("pop-in"), 260);
+
+  if (window.IS_CAT) {
+    playCatAnimation(mood);
+  } else {
+    // Clippy: extra CSS class for sad/thinking
+    img.className = "";
+    if (mood === "thinking") { img.classList.add("thinking"); }
+    if (mood === "sad" || mood === "scared") { img.classList.add("clippy-sad"); }
+    playClippyAnimation(mood, loop);
+  }
+}
+
+// ── Bubble ────────────────────────────────────────────────────
 let bubbleTimeout: number | undefined;
-let returnToIdleTimeout: number | undefined;
+let returnIdleTimeout: number | undefined;
 
 window.addEventListener("message", (event) => {
-  const message = event.data;
-  if (message.type === "showMessage") {
-    showBubble(message.text, message.mood ?? "happy");
-  }
+  const msg = event.data;
+  if (msg.type === "showMessage") { showBubble(msg.text, msg.mood ?? "idle"); }
 });
 
 function showBubble(text: string, mood: string, duration = 6000): void {
   clearTimeout(bubbleTimeout);
-  clearTimeout(returnToIdleTimeout);
+  clearTimeout(returnIdleTimeout);
 
-  // Play the mood animation (non-looping for action moods)
-  const looping = mood === "idle" || mood === "thinking" || mood === "sad";
+  const looping = mood === "idle" || mood === "thinking" || mood === "sad" || mood === "sleeping";
   playAnimation(mood, looping);
 
   bubble.textContent = text;
@@ -95,8 +102,7 @@ function showBubble(text: string, mood: string, duration = 6000): void {
 
   bubbleTimeout = window.setTimeout(() => {
     bubble.classList.remove("visible");
-    // Return to idle after bubble fades
-    returnToIdleTimeout = window.setTimeout(() => playAnimation("idle", true), 400);
+    returnIdleTimeout = window.setTimeout(() => playAnimation("idle", true), 400);
     vscode.postMessage({ type: "bubbleDismissed" });
   }, duration);
 }
