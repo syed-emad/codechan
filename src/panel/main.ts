@@ -1,5 +1,6 @@
 declare const window: Window & {
-  CLIPPY_SPRITES: Record<string, string>;
+  CLIPPY_ANIMATIONS: Record<string, string[]>;
+  CLIPPY_FALLBACK: string;
 };
 
 declare function acquireVsCodeApi(): {
@@ -11,75 +12,95 @@ declare function acquireVsCodeApi(): {
 const vscode = acquireVsCodeApi();
 
 const bubble = document.getElementById("bubble")!;
-const characterImg = document.getElementById("character-img") as HTMLImageElement;
+const img = document.getElementById("character-img") as HTMLImageElement;
 
-const MOOD_ANIM: Record<string, string> = {
-  idle:     "anim-idle",
-  happy:    "anim-happy",
-  sad:      "anim-sad",
-  talking:  "anim-talking",
-  thinking: "anim-thinking",
-  excited:  "anim-excited",
+// Fallback to static idle if any frame fails to load
+img.onerror = () => {
+  if (window.CLIPPY_FALLBACK) {
+    img.src = window.CLIPPY_FALLBACK;
+  }
 };
 
+// ── Frame animator ────────────────────────────────────────────
+const FPS = 8;
+let frameIndex = 0;
+let frameTimer: number | undefined;
+let currentFrames: string[] = [];
+
+function playAnimation(mood: string, loop = true): void {
+  const anims = window.CLIPPY_ANIMATIONS ?? {};
+  const frames = anims[mood] ?? anims["idle"] ?? [];
+  if (!frames.length) { return; }
+
+  // Stop existing timer
+  clearInterval(frameTimer);
+
+  currentFrames = frames;
+  frameIndex = 0;
+  console.log("[clippy-chan] playing", mood, "frame[0]:", frames[0]);
+  img.src = frames[0];
+
+  // Remove old mood classes, add new
+  img.className = "";
+  void img.offsetWidth; // reflow to restart animations
+  img.classList.add("pop-in");
+  setTimeout(() => {
+    img.classList.remove("pop-in");
+    if (mood === "thinking") { img.classList.add("thinking"); }
+    if (mood === "sad")      { img.classList.add("sad"); }
+  }, 260);
+
+  if (frames.length === 1) {
+    // Static frame — no timer needed
+    return;
+  }
+
+  frameTimer = window.setInterval(() => {
+    frameIndex++;
+    if (frameIndex >= frames.length) {
+      if (loop) {
+        frameIndex = 0;
+      } else {
+        // Animation done — go back to idle
+        clearInterval(frameTimer);
+        playAnimation("idle", true);
+        return;
+      }
+    }
+    img.src = frames[frameIndex];
+  }, 1000 / FPS);
+}
+
+// ── Message handler ───────────────────────────────────────────
 let bubbleTimeout: number | undefined;
-let idleTimeout: number | undefined;
-let currentMood = "idle";
+let returnToIdleTimeout: number | undefined;
 
-// Set initial sprite
-setCharacter("idle");
-
-// ── Message handler ──────────────────────────────────────────
 window.addEventListener("message", (event) => {
   const message = event.data;
   if (message.type === "showMessage") {
-    const mood = message.mood ?? "talking";
-    showBubble(message.text, mood);
+    showBubble(message.text, message.mood ?? "happy");
   }
 });
 
-// ── Character ────────────────────────────────────────────────
-function setCharacter(mood: string, temporary = false): void {
-  const sprites = window.CLIPPY_SPRITES ?? {};
-  const src = sprites[mood] ?? sprites["idle"];
-  if (!src) { return; }
-
-  currentMood = mood;
-  characterImg.src = src;
-
-  // Swap animation class
-  const animClass = MOOD_ANIM[mood] ?? "anim-idle";
-  characterImg.className = "";
-  // Trigger reflow so re-adding same class restarts animation
-  void characterImg.offsetWidth;
-  characterImg.classList.add(animClass, "pop-in");
-
-  // After pop-in finishes, keep only the mood animation
-  setTimeout(() => characterImg.classList.remove("pop-in"), 320);
-
-  // If temporary mood, return to idle after a bit
-  if (temporary) {
-    clearTimeout(idleTimeout);
-    idleTimeout = window.setTimeout(() => setCharacter("idle"), 4000);
-  }
-}
-
-// ── Speech bubble ─────────────────────────────────────────────
-function showBubble(text: string, mood = "talking", duration = 6000): void {
+function showBubble(text: string, mood: string, duration = 6000): void {
   clearTimeout(bubbleTimeout);
+  clearTimeout(returnToIdleTimeout);
 
-  // Switch to talking sprite while bubble is visible, then to mood sprite
-  setCharacter(mood, true);
+  // Play the mood animation (non-looping for action moods)
+  const looping = mood === "idle" || mood === "thinking" || mood === "sad";
+  playAnimation(mood, looping);
 
   bubble.textContent = text;
   bubble.classList.add("visible");
 
   bubbleTimeout = window.setTimeout(() => {
     bubble.classList.remove("visible");
-    bubbleTimeout = undefined;
+    // Return to idle after bubble fades
+    returnToIdleTimeout = window.setTimeout(() => playAnimation("idle", true), 400);
     vscode.postMessage({ type: "bubbleDismissed" });
   }, duration);
 }
 
-// Signal ready
+// ── Boot ──────────────────────────────────────────────────────
+playAnimation("idle", true);
 vscode.postMessage({ type: "ready" });

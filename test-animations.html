@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Cat Animation Preview</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #1e1e1e;
+      color: #ccc;
+      font-family: monospace;
+      padding: 32px;
+    }
+
+    h1 {
+      color: #fff;
+      margin-bottom: 8px;
+      font-size: 20px;
+    }
+
+    p {
+      color: #888;
+      margin-bottom: 32px;
+      font-size: 13px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: #2d2d2d;
+      border: 1px solid #444;
+      border-radius: 12px;
+      padding: 24px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .card label {
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      width: 100px;
+      height: 100px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      position: relative;
+      overflow: visible;
+    }
+
+    .cat {
+      width: 64px;
+      height: 64px;
+      image-rendering: pixelated;
+    }
+
+    /* ── 1. IDLE BOB ── */
+    .idle {
+      animation: idle-bob 1.8s ease-in-out infinite;
+    }
+    @keyframes idle-bob {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-6px); }
+    }
+
+    /* ── 2. WALK ── */
+    .walk {
+      animation: walk-move 0.5s ease-in-out infinite;
+    }
+    @keyframes walk-move {
+      0%   { transform: translateY(0px) rotate(-3deg); }
+      25%  { transform: translateY(-4px) rotate(0deg); }
+      50%  { transform: translateY(0px) rotate(3deg); }
+      75%  { transform: translateY(-4px) rotate(0deg); }
+      100% { transform: translateY(0px) rotate(-3deg); }
+    }
+
+    /* ── 3. JUMP ── */
+    .jump {
+      animation: jump 1.2s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    @keyframes jump {
+      0%   { transform: scaleX(1.1) scaleY(0.9) translateY(0); }
+      10%  { transform: scaleX(0.9) scaleY(1.1) translateY(0); }
+      40%  { transform: scaleX(1) scaleY(1) translateY(-40px); }
+      70%  { transform: scaleX(1) scaleY(1) translateY(-40px); }
+      90%  { transform: scaleX(1.15) scaleY(0.85) translateY(0); }
+      100% { transform: scaleX(1.1) scaleY(0.9) translateY(0); }
+    }
+
+    /* ── 4. EXCITED ── */
+    .excited {
+      animation: excited 0.35s ease-in-out infinite;
+    }
+    @keyframes excited {
+      0%, 100% { transform: translateY(0) scale(1); }
+      30%       { transform: translateY(-14px) scale(1.05); }
+      60%       { transform: translateY(-6px) scale(1.02); }
+    }
+
+    /* ── 5. SCARED/SHAKE ── */
+    .scared {
+      animation: scared 0.12s ease-in-out infinite;
+    }
+    @keyframes scared {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      25%       { transform: translateX(-4px) rotate(-3deg); }
+      75%       { transform: translateX(4px) rotate(3deg); }
+    }
+
+    /* ── 6. SAD ── */
+    .sad {
+      animation: sad-droop 0.4s ease-out forwards, sad-sway 2.5s ease-in-out 0.4s infinite;
+    }
+    @keyframes sad-droop {
+      0%   { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(5px) rotate(-6deg); }
+    }
+    @keyframes sad-sway {
+      0%, 100% { transform: translateY(5px) rotate(-6deg); }
+      50%       { transform: translateY(5px) rotate(6deg); }
+    }
+
+    /* ── 7. SPIN ── */
+    .spin {
+      animation: spin 1s linear infinite;
+      transform-origin: center center;
+    }
+    @keyframes spin {
+      0%   { transform: rotate(0deg) scale(1); }
+      50%  { transform: rotate(180deg) scale(0.9); }
+      100% { transform: rotate(360deg) scale(1); }
+    }
+
+    /* ── 8. WALL CLIMB ── */
+    .climb {
+      animation: climb 0.6s ease-in-out infinite;
+      transform-origin: center;
+    }
+    @keyframes climb {
+      0%   { transform: rotate(90deg) translateY(0px); }
+      50%  { transform: rotate(90deg) translateY(-8px); }
+      100% { transform: rotate(90deg) translateY(0px); }
+    }
+
+    /* ── 9. FALL ── */
+    .fall {
+      animation: fall 1.4s ease-in infinite;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-50px) rotate(0deg); opacity: 1; }
+      70%  { transform: translateY(10px) rotate(20deg); opacity: 1; }
+      80%  { transform: translateY(0px) scaleX(1.2) scaleY(0.7) rotate(0deg); }
+      100% { transform: translateY(0px) scaleX(1) scaleY(1); }
+    }
+
+    /* ── 10. SLEEP ── */
+    .sleep {
+      animation: sleep 3s ease-in-out infinite;
+    }
+    @keyframes sleep {
+      0%, 100% { transform: translateY(0) rotate(-2deg) scaleY(0.9); }
+      50%       { transform: translateY(2px) rotate(-2deg) scaleY(0.85); }
+    }
+
+    .zzz {
+      position: absolute;
+      top: 0;
+      right: 8px;
+      font-size: 14px;
+      animation: zzz-float 3s ease-in-out infinite;
+    }
+    @keyframes zzz-float {
+      0%   { opacity: 0; transform: translateY(0) scale(0.6); }
+      30%  { opacity: 1; transform: translateY(-10px) scale(1); }
+      70%  { opacity: 1; transform: translateY(-20px) scale(1.1); }
+      100% { opacity: 0; transform: translateY(-30px) scale(0.8); }
+    }
+
+    /* ── 11. PEEK ── */
+    .peek {
+      animation: peek 2s ease-in-out infinite;
+      transform-origin: bottom center;
+    }
+    @keyframes peek {
+      0%, 40%, 100% { transform: scaleY(0.1) translateY(28px); }
+      50%, 90%      { transform: scaleY(1) translateY(0px); }
+    }
+
+    /* ── 12. ZOOM ── */
+    .zoom {
+      animation: zoom 1.5s ease-in-out infinite;
+    }
+    @keyframes zoom {
+      0%   { transform: translateX(-60px) translateY(0) rotate(-5deg); opacity: 0; }
+      20%  { opacity: 1; }
+      50%  { transform: translateX(0px) translateY(-8px) rotate(0deg); opacity: 1; }
+      80%  { opacity: 1; }
+      100% { transform: translateX(60px) translateY(0) rotate(5deg); opacity: 0; }
+    }
+
+    .ground {
+      width: 80px;
+      height: 2px;
+      background: #555;
+      border-radius: 1px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Cat Animation Preview</h1>
+  <p>All animations use the single front-facing cat PNG with pure CSS — no extra assets needed.</p>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="stage">
+        <img class="cat idle" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Idle Bob</label>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <img class="cat walk" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Walk</label>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <img class="cat jump" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Jump</label>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <img class="cat excited" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Excited</label>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <img class="cat scared" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Scared / Error</label>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <img class="cat sad" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Sad</label>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <img class="cat spin" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Spin / Celebrate</label>
+    </div>
+
+    <div class="card">
+      <div class="stage" style="overflow:hidden; width:80px;">
+        <img class="cat climb" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Wall Climb</label>
+    </div>
+
+    <div class="card">
+      <div class="stage">
+        <img class="cat fall" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Fall + Land</label>
+    </div>
+
+    <div class="card">
+      <div class="stage" style="position:relative;">
+        <span class="zzz">💤</span>
+        <img class="cat sleep" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Sleep</label>
+    </div>
+
+    <div class="card">
+      <div class="stage" style="overflow:hidden;">
+        <img class="cat peek" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Peek</label>
+    </div>
+
+    <div class="card">
+      <div class="stage" style="overflow:hidden;">
+        <img class="cat zoom" src="media/cat.png" alt="cat">
+      </div>
+      <div class="ground"></div>
+      <label>Zoom Across</label>
+    </div>
+
+  </div>
+</body>
+</html>

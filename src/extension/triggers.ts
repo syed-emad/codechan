@@ -63,7 +63,7 @@ const MESSAGES = {
 
 export class TriggerManager {
   private lastMessageTime = 0;
-  private readonly cooldownMs = 90_000; // 1.5 min between messages
+  private readonly cooldownMs = 5_000; // 5 seconds (testing — change back to 90_000 for prod)
   private saveCount = 0;
   private prevErrorCount = 0;
   private sessionStart = Date.now();
