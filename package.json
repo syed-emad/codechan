@@ -1,0 +1,42 @@
+{
+  "name": "clippy-chan",
+  "displayName": "Clippy-Chan",
+  "description": "An animated clippy/anime companion that shows motivating and funny messages while you code",
+  "version": "0.1.0",
+  "publisher": "emad",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension/extension.js",
+  "contributes": {
+    "views": {
+      "explorer": [
+        {
+          "type": "webview",
+          "id": "clippy-chan.panel",
+          "name": "Clippy-Chan"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "clippy-chan.showMessage",
+        "title": "Clippy-Chan: Show Message"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "package": "vsce package",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.116.0",
+    "@vscode/vsce": "^3.9.1",
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.3"
+  }
+}
