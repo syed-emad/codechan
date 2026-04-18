@@ -11,11 +11,27 @@
   "activationEvents": ["onStartupFinished"],
   "main": "./out/extension/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "clippy-chan-panel",
+          "title": "Clippy-Chan",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
     "views": {
       "explorer": [
         {
           "type": "webview",
-          "id": "clippy-chan.panel",
+          "id": "clippy-chan.sidebar",
+          "name": "Clippy-Chan"
+        }
+      ],
+      "clippy-chan-panel": [
+        {
+          "type": "webview",
+          "id": "clippy-chan.bottomPanel",
           "name": "Clippy-Chan"
         }
       ]

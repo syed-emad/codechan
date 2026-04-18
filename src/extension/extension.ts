@@ -1,25 +1,26 @@
 import * as vscode from "vscode";
 import { ClippyChanViewProvider } from "./providers";
 
-let statusBarItem: vscode.StatusBarItem;
+const SIDEBAR_VIEW = "clippy-chan.sidebar";
+const PANEL_VIEW = "clippy-chan.bottomPanel";
 
 export function activate(context: vscode.ExtensionContext) {
-  const provider = new ClippyChanViewProvider(context.extensionUri);
+  // One provider for the Explorer sidebar, one for the bottom panel
+  const sidebarProvider = new ClippyChanViewProvider(context.extensionUri, SIDEBAR_VIEW);
+  const panelProvider = new ClippyChanViewProvider(context.extensionUri, PANEL_VIEW);
 
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(
-      ClippyChanViewProvider.viewType,
-      provider
-    )
+    vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW, sidebarProvider),
+    vscode.window.registerWebviewViewProvider(PANEL_VIEW, panelProvider)
   );
 
-  // Status bar character — always visible at the bottom
-  statusBarItem = vscode.window.createStatusBarItem(
+  // Status bar — always visible, click to trigger a message
+  const statusBarItem = vscode.window.createStatusBarItem(
     vscode.StatusBarAlignment.Right,
     0
   );
-  statusBarItem.text = "$(smiley) Clippy-Chan";
-  statusBarItem.tooltip = "Click for a message from Clippy-Chan!";
+  statusBarItem.text = "🧷 Clippy-Chan";
+  statusBarItem.tooltip = "Click for a message!";
   statusBarItem.command = "clippy-chan.showMessage";
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
@@ -34,12 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
         "Another console.log? Classic.",
       ];
       const text = messages[Math.floor(Math.random() * messages.length)];
-
-      // Show as notification so it's visible regardless of sidebar state
-      vscode.window.showInformationMessage(`Clippy-Chan: ${text}`);
-
-      // Also send to webview panel if it's open
-      provider.sendMessage(text, "motivation", "happy");
+      sidebarProvider.sendMessage(text, "motivation", "happy");
+      panelProvider.sendMessage(text, "motivation", "happy");
     })
   );
 }
