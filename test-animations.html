@@ -2,328 +2,359 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cat Animation Preview</title>
+  <title>Character Animation Preview</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 24px; }
+    h1 { color: #fff; font-size: 22px; margin-bottom: 4px; }
+    p  { color: #888; font-size: 12px; margin-bottom: 28px; }
 
-    body {
-      background: #1e1e1e;
-      color: #ccc;
-      font-family: monospace;
-      padding: 32px;
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+    .tab {
+      padding: 8px 20px; border-radius: 20px; cursor: pointer;
+      border: 2px solid #444; background: #2a2a3e; color: #aaa;
+      font-family: monospace; font-size: 13px; transition: all 0.2s;
     }
+    .tab.active { border-color: #7c6af7; background: #3a2a6e; color: #fff; }
 
-    h1 {
-      color: #fff;
-      margin-bottom: 8px;
-      font-size: 20px;
-    }
+    .character-section { display: none; }
+    .character-section.active { display: block; }
+    .char-title { font-size: 16px; color: #7c6af7; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 2px; }
 
-    p {
-      color: #888;
-      margin-bottom: 32px;
-      font-size: 13px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 24px;
-    }
-
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
     .card {
-      background: #2d2d2d;
-      border: 1px solid #444;
-      border-radius: 12px;
-      padding: 24px 16px 16px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
+      background: #2a2a3e; border: 1px solid #3a3a5e; border-radius: 12px;
+      padding: 20px 12px 14px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
     }
+    .card label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; text-align: center; }
+    .stage { width: 120px; height: 130px; display: flex; align-items: flex-end; justify-content: center; }
+    .char { width: 100px; height: 100px; image-rendering: pixelated; }
+    .ground { width: 80px; height: 2px; background: #3a3a5e; border-radius: 1px; }
 
-    .card label {
-      font-size: 12px;
-      color: #aaa;
-      text-align: center;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-    }
+    .fps-note { font-size: 10px; color: #555; margin-top: 2px; }
 
-    .stage {
-      width: 100px;
-      height: 100px;
+    /* ── Full character preview ── */
+    .preview {
+      margin-top: 32px;
+      background: #12122a;
+      border: 1px solid #3a3a5e;
+      border-radius: 16px;
+      padding: 24px;
       display: flex;
       align-items: flex-end;
       justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .preview-char {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: 160px;
+    }
+    .bubble-box {
+      background: #2a2a3e;
+      border: 1px solid #4a4a7e;
+      border-radius: 10px;
+      padding: 9px 13px;
+      font-size: 11px;
+      color: #ccc;
+      text-align: center;
+      line-height: 1.5;
       position: relative;
-      overflow: visible;
+      margin-bottom: 10px;
+      min-height: 36px;
+      width: 100%;
     }
-
-    .cat {
-      width: 64px;
-      height: 64px;
-      image-rendering: pixelated;
-    }
-
-    /* ── 1. IDLE BOB ── */
-    .idle {
-      animation: idle-bob 1.8s ease-in-out infinite;
-    }
-    @keyframes idle-bob {
-      0%, 100% { transform: translateY(0px); }
-      50%       { transform: translateY(-6px); }
-    }
-
-    /* ── 2. WALK ── */
-    .walk {
-      animation: walk-move 0.5s ease-in-out infinite;
-    }
-    @keyframes walk-move {
-      0%   { transform: translateY(0px) rotate(-3deg); }
-      25%  { transform: translateY(-4px) rotate(0deg); }
-      50%  { transform: translateY(0px) rotate(3deg); }
-      75%  { transform: translateY(-4px) rotate(0deg); }
-      100% { transform: translateY(0px) rotate(-3deg); }
-    }
-
-    /* ── 3. JUMP ── */
-    .jump {
-      animation: jump 1.2s ease-in-out infinite;
-      transform-origin: bottom center;
-    }
-    @keyframes jump {
-      0%   { transform: scaleX(1.1) scaleY(0.9) translateY(0); }
-      10%  { transform: scaleX(0.9) scaleY(1.1) translateY(0); }
-      40%  { transform: scaleX(1) scaleY(1) translateY(-40px); }
-      70%  { transform: scaleX(1) scaleY(1) translateY(-40px); }
-      90%  { transform: scaleX(1.15) scaleY(0.85) translateY(0); }
-      100% { transform: scaleX(1.1) scaleY(0.9) translateY(0); }
-    }
-
-    /* ── 4. EXCITED ── */
-    .excited {
-      animation: excited 0.35s ease-in-out infinite;
-    }
-    @keyframes excited {
-      0%, 100% { transform: translateY(0) scale(1); }
-      30%       { transform: translateY(-14px) scale(1.05); }
-      60%       { transform: translateY(-6px) scale(1.02); }
-    }
-
-    /* ── 5. SCARED/SHAKE ── */
-    .scared {
-      animation: scared 0.12s ease-in-out infinite;
-    }
-    @keyframes scared {
-      0%, 100% { transform: translateX(0) rotate(0deg); }
-      25%       { transform: translateX(-4px) rotate(-3deg); }
-      75%       { transform: translateX(4px) rotate(3deg); }
-    }
-
-    /* ── 6. SAD ── */
-    .sad {
-      animation: sad-droop 0.4s ease-out forwards, sad-sway 2.5s ease-in-out 0.4s infinite;
-    }
-    @keyframes sad-droop {
-      0%   { transform: translateY(0) rotate(0deg); }
-      100% { transform: translateY(5px) rotate(-6deg); }
-    }
-    @keyframes sad-sway {
-      0%, 100% { transform: translateY(5px) rotate(-6deg); }
-      50%       { transform: translateY(5px) rotate(6deg); }
-    }
-
-    /* ── 7. SPIN ── */
-    .spin {
-      animation: spin 1s linear infinite;
-      transform-origin: center center;
-    }
-    @keyframes spin {
-      0%   { transform: rotate(0deg) scale(1); }
-      50%  { transform: rotate(180deg) scale(0.9); }
-      100% { transform: rotate(360deg) scale(1); }
-    }
-
-    /* ── 8. WALL CLIMB ── */
-    .climb {
-      animation: climb 0.6s ease-in-out infinite;
-      transform-origin: center;
-    }
-    @keyframes climb {
-      0%   { transform: rotate(90deg) translateY(0px); }
-      50%  { transform: rotate(90deg) translateY(-8px); }
-      100% { transform: rotate(90deg) translateY(0px); }
-    }
-
-    /* ── 9. FALL ── */
-    .fall {
-      animation: fall 1.4s ease-in infinite;
-    }
-    @keyframes fall {
-      0%   { transform: translateY(-50px) rotate(0deg); opacity: 1; }
-      70%  { transform: translateY(10px) rotate(20deg); opacity: 1; }
-      80%  { transform: translateY(0px) scaleX(1.2) scaleY(0.7) rotate(0deg); }
-      100% { transform: translateY(0px) scaleX(1) scaleY(1); }
-    }
-
-    /* ── 10. SLEEP ── */
-    .sleep {
-      animation: sleep 3s ease-in-out infinite;
-    }
-    @keyframes sleep {
-      0%, 100% { transform: translateY(0) rotate(-2deg) scaleY(0.9); }
-      50%       { transform: translateY(2px) rotate(-2deg) scaleY(0.85); }
-    }
-
-    .zzz {
+    .bubble-box::after {
+      content: '';
       position: absolute;
-      top: 0;
-      right: 8px;
-      font-size: 14px;
-      animation: zzz-float 3s ease-in-out infinite;
+      bottom: -8px; left: 50%;
+      transform: translateX(-50%);
+      border-left: 8px solid transparent;
+      border-right: 8px solid transparent;
+      border-top: 8px solid #4a4a7e;
     }
-    @keyframes zzz-float {
-      0%   { opacity: 0; transform: translateY(0) scale(0.6); }
-      30%  { opacity: 1; transform: translateY(-10px) scale(1); }
-      70%  { opacity: 1; transform: translateY(-20px) scale(1.1); }
-      100% { opacity: 0; transform: translateY(-30px) scale(0.8); }
-    }
+    .preview-img { width: 120px; height: 120px; image-rendering: pixelated; }
+    .preview-ground { width: 100px; height: 2px; background: #3a3a5e; border-radius: 1px; margin-top: 2px; }
+    .preview-label { font-size: 10px; color: #666; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
 
-    /* ── 11. PEEK ── */
-    .peek {
-      animation: peek 2s ease-in-out infinite;
-      transform-origin: bottom center;
-    }
-    @keyframes peek {
-      0%, 40%, 100% { transform: scaleY(0.1) translateY(28px); }
-      50%, 90%      { transform: scaleY(1) translateY(0px); }
-    }
+    .all-char-block { margin-bottom: 48px; }
+    .all-char-block .char-title { border-bottom: 1px solid #3a3a5e; padding-bottom: 10px; margin-bottom: 20px; }
 
-    /* ── 12. ZOOM ── */
-    .zoom {
-      animation: zoom 1.5s ease-in-out infinite;
-    }
-    @keyframes zoom {
-      0%   { transform: translateX(-60px) translateY(0) rotate(-5deg); opacity: 0; }
-      20%  { opacity: 1; }
-      50%  { transform: translateX(0px) translateY(-8px) rotate(0deg); opacity: 1; }
-      80%  { opacity: 1; }
-      100% { transform: translateX(60px) translateY(0) rotate(5deg); opacity: 0; }
-    }
+    /* ── Cat CSS Animations ── */
+    .cat-idle-bob { animation: cat-bob 1.8s ease-in-out infinite; }
+    @keyframes cat-bob { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-6px); } }
 
-    .ground {
-      width: 80px;
-      height: 2px;
-      background: #555;
-      border-radius: 1px;
-      margin-top: 4px;
-    }
+    .cat-walk { animation: cat-walk 1.2s ease-in-out infinite; }
+    @keyframes cat-walk { 0%, 100% { transform: translateX(0) rotate(0deg); } 25% { transform: translateX(8px) rotate(-2deg); } 50% { transform: translateX(0) rotate(0deg); } 75% { transform: translateX(-8px) rotate(2deg); } }
+
+    .cat-jump { animation: cat-jump 0.6s ease-in-out infinite; }
+    @keyframes cat-jump { 0%, 100% { transform: translateY(0) scaleY(1); } 30% { transform: translateY(-28px) scaleY(0.9); } 50% { transform: translateY(-32px) scaleY(0.85); } }
+
+    .cat-excited { animation: cat-excited 0.4s ease-in-out infinite; }
+    @keyframes cat-excited { 0%, 100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-16px) scale(1.08); } 60% { transform: translateY(-6px) scale(1.03); } }
+
+    .cat-scared { animation: cat-scared 0.1s ease-in-out infinite; }
+    @keyframes cat-scared { 0%, 100% { transform: translateX(0) rotate(0deg) scale(1); } 20% { transform: translateX(-5px) rotate(-4deg) scale(0.97); } 80% { transform: translateX(5px) rotate(4deg) scale(0.97); } }
+
+    .cat-sad { animation: cat-sad-droop 0.4s ease-out forwards, cat-sad-sway 3s ease-in-out 0.4s infinite; }
+    @keyframes cat-sad-droop { 0% { transform: translateY(0) rotate(0deg); } 100% { transform: translateY(5px) rotate(-5deg); } }
+    @keyframes cat-sad-sway { 0%, 100% { transform: translateY(5px) rotate(-5deg); } 50% { transform: translateY(5px) rotate(5deg); } }
+
+    .cat-spin { animation: cat-spin 0.8s linear infinite; }
+    @keyframes cat-spin { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.05); } 100% { transform: rotate(360deg) scale(1); } }
+
+    .cat-climb { animation: cat-climb 1s ease-in-out infinite; }
+    @keyframes cat-climb { 0%, 100% { transform: translateY(0) scaleX(1) rotate(-8deg); } 50% { transform: translateY(-12px) scaleX(0.95) rotate(-8deg); } }
+
+    .cat-fall { animation: cat-fall 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) infinite; }
+    @keyframes cat-fall { 0% { transform: translateY(0) rotate(-15deg) scaleY(1); } 80% { transform: translateY(20px) rotate(0deg) scaleY(0.9); } 100% { transform: translateY(0) rotate(0deg) scaleY(1); } }
+
+    .cat-sleep { animation: cat-sleep 3s ease-in-out infinite; }
+    @keyframes cat-sleep { 0%, 100% { transform: translateY(0) scaleY(0.92) rotate(-2deg); } 50% { transform: translateY(3px) scaleY(0.88) rotate(-2deg); } }
+
+    .cat-peek { animation: cat-peek 2s ease-in-out infinite; }
+    @keyframes cat-peek { 0%, 100% { transform: translateX(-16px) rotate(-25deg); opacity: 0.5; } 50% { transform: translateX(0) rotate(0deg); opacity: 1; } }
+
+    .cat-zoom { animation: cat-zoom 1.5s ease-in-out infinite; }
+    @keyframes cat-zoom { 0%, 100% { transform: translateX(-20px) scale(0.85) rotate(-10deg); } 50% { transform: translateX(20px) scale(1.1) rotate(5deg); } }
   </style>
 </head>
 <body>
-  <h1>Cat Animation Preview</h1>
-  <p>All animations use the single front-facing cat PNG with pure CSS — no extra assets needed.</p>
+  <h1>Character Animation Preview</h1>
+  <p>Frame-by-frame animation — cycling through emotion PNGs. Each card shows a different animation sequence.</p>
 
-  <div class="grid">
-
-    <div class="card">
-      <div class="stage">
-        <img class="cat idle" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Idle Bob</label>
-    </div>
-
-    <div class="card">
-      <div class="stage">
-        <img class="cat walk" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Walk</label>
-    </div>
-
-    <div class="card">
-      <div class="stage">
-        <img class="cat jump" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Jump</label>
-    </div>
-
-    <div class="card">
-      <div class="stage">
-        <img class="cat excited" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Excited</label>
-    </div>
-
-    <div class="card">
-      <div class="stage">
-        <img class="cat scared" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Scared / Error</label>
-    </div>
-
-    <div class="card">
-      <div class="stage">
-        <img class="cat sad" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Sad</label>
-    </div>
-
-    <div class="card">
-      <div class="stage">
-        <img class="cat spin" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Spin / Celebrate</label>
-    </div>
-
-    <div class="card">
-      <div class="stage" style="overflow:hidden; width:80px;">
-        <img class="cat climb" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Wall Climb</label>
-    </div>
-
-    <div class="card">
-      <div class="stage">
-        <img class="cat fall" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Fall + Land</label>
-    </div>
-
-    <div class="card">
-      <div class="stage" style="position:relative;">
-        <span class="zzz">💤</span>
-        <img class="cat sleep" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Sleep</label>
-    </div>
-
-    <div class="card">
-      <div class="stage" style="overflow:hidden;">
-        <img class="cat peek" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Peek</label>
-    </div>
-
-    <div class="card">
-      <div class="stage" style="overflow:hidden;">
-        <img class="cat zoom" src="media/cat.png" alt="cat">
-      </div>
-      <div class="ground"></div>
-      <label>Zoom Across</label>
-    </div>
-
+  <div class="tabs">
+    <div class="tab active" onclick="show('kaen', event)">🔴 Kaen</div>
+    <div class="tab" onclick="show('yuki', event)">⚪ Yuki</div>
+    <div class="tab" onclick="show('ren', event)">🟤 Ren</div>
+    <div class="tab" onclick="show('clippy', event)">🧷 Clippy</div>
+    <div class="tab" onclick="show('cat', event)">😎 Cool Cat</div>
+    <div class="tab" onclick="show('all', event)">✨ All</div>
   </div>
+
+  <div id="sections"></div>
+  <div id="section-all" class="character-section"></div>
+
+  <script>
+    // ── Animation sequences ──────────────────────────────────────
+    // Each sequence is: [frames array, fps, loop?]
+    // Frame names map to: {char}-{emotion}-256.png
+    const SEQUENCES = [
+      {
+        label: "Idle — blink",
+        fps: 4,
+        // long idle, then quick blink using thinking as half-closed eyes
+        frames: ["idle","idle","idle","idle","idle","idle","thinking","idle","idle","idle","idle","idle","idle","idle","thinking","thinking","idle"],
+      },
+      {
+        label: "Talking",
+        fps: 8,
+        frames: ["idle","talking","idle","talking","talking","idle","talking","idle","idle","talking"],
+      },
+      {
+        label: "Happy",
+        fps: 6,
+        frames: ["idle","happy","idle","happy","happy","excited","happy","idle"],
+      },
+      {
+        label: "Excited",
+        fps: 8,
+        frames: ["idle","excited","happy","excited","excited","happy","excited","idle","idle"],
+      },
+      {
+        label: "Sad / Error",
+        fps: 4,
+        frames: ["idle","sad","sad","sad","idle","sad","sad","sad","sad","idle"],
+      },
+      {
+        label: "Thinking",
+        fps: 2,
+        frames: ["thinking","thinking","thinking","thinking","thinking","thinking"],
+      },
+    ];
+
+    const CHARS = {
+      kaen:   { label: "Kaen — ember fox",   path: "media/characters/kaen/static/kaen" },
+      cat:    { label: "Cool Cat — CSS animations", path: "media/characters/cat/static/cat", isCat: true },
+      yuki:   { label: "Yuki — hollow moon", path: "media/characters/yuki/static/yuki" },
+      ren:    { label: "Ren",                path: "media/characters/ren/static/ren" },
+      clippy: { label: "Clippy",             path: "media/characters/clippy/static/clip" },
+    };
+
+    // Pre-build all sections
+    const sectionsEl = document.getElementById("sections");
+    Object.entries(CHARS).forEach(([id, char]) => {
+      const section = document.createElement("div");
+      section.className = "character-section" + (id === "kaen" ? " active" : "");
+      section.id = "section-" + id;
+
+      if (char.isCat) {
+        section.innerHTML = `
+          <div class="char-title">${char.label}</div>
+          <p style="color: #888; font-size: 12px; margin-bottom: 20px;">All animations use the single front-facing cat PNG with pure CSS — no extra assets needed.</p>
+          <div class="grid" id="grid-${id}"></div>
+        `;
+      } else {
+      section.innerHTML = `
+        <div class="char-title">${char.label}</div>
+        <div class="grid" id="grid-${id}"></div>
+        <div class="preview" id="preview-${id}">
+          <div class="preview-char">
+            <div class="bubble-box">Ctrl+S won't save your architecture though.</div>
+            <img id="prev-thinking-${id}" class="preview-img" src="${char.path}-thinking-256.png"/>
+            <div class="preview-ground"></div>
+            <div class="preview-label">Thinking</div>
+          </div>
+          <div class="preview-char">
+            <div class="bubble-box">ZERO ERRORS! Ship it before you touch anything else.</div>
+            <img id="prev-excited-${id}" class="preview-img" src="${char.path}-excited-256.png"/>
+            <div class="preview-ground"></div>
+            <div class="preview-label">Excited</div>
+          </div>
+          <div class="preview-char">
+            <div class="bubble-box">The compiler called. It's disappointed.</div>
+            <img id="prev-sad-${id}" class="preview-img" src="${char.path}-sad-256.png"/>
+            <div class="preview-ground"></div>
+            <div class="preview-label">Sad</div>
+          </div>
+          <div class="preview-char">
+            <div class="bubble-box">Welcome back! The bugs waited.</div>
+            <img id="prev-idle-${id}" class="preview-img" src="${char.path}-idle-256.png"/>
+            <div class="preview-ground"></div>
+            <div class="preview-label">Idle</div>
+          </div>
+        </div>
+      `;
+      }
+      sectionsEl.appendChild(section);
+
+      const grid = section.querySelector(".grid");
+      
+      if (char.isCat && grid) {
+        const CAT_ANIMATIONS = [
+          { label: "Idle Bob", class: "cat-idle-bob" },
+          { label: "Walk", class: "cat-walk" },
+          { label: "Jump", class: "cat-jump" },
+          { label: "Excited", class: "cat-excited" },
+          { label: "Scared / Error", class: "cat-scared" },
+          { label: "Sad", class: "cat-sad" },
+          { label: "Spin / Celebrate", class: "cat-spin" },
+          { label: "Wall Climb", class: "cat-climb" },
+          { label: "Fall + Land", class: "cat-fall" },
+          { label: "Sleep", class: "cat-sleep" },
+          { label: "Peek", class: "cat-peek" },
+          { label: "Zoom Across", class: "cat-zoom" },
+        ];
+        CAT_ANIMATIONS.forEach((anim, i) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          const imgId = `cat-anim-${i}`;
+          card.innerHTML = `
+            <div class="stage">
+              <img id="${imgId}" class="char" src="${char.path}.png" />
+            </div>
+            <div class="ground"></div>
+            <label>${anim.label}</label>
+          `;
+          grid.appendChild(card);
+          const img = card.querySelector(`#${imgId}`);
+          img.classList.add(anim.class);
+        });
+      } else if (!char.isCat && grid) {
+      SEQUENCES.forEach((seq, i) => {
+        const imgId = `img-${id}-${i}`;
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
+          <div class="stage">
+            <img id="${imgId}" class="char" src="${char.path}-idle-256.png" />
+          </div>
+          <div class="ground"></div>
+          <label>${seq.label}</label>
+          <div class="fps-note">${seq.fps} fps · ${seq.frames.length} frames</div>
+        `;
+        grid.appendChild(card);
+        startAnimation(imgId, char.path, seq);
+      });
+      }
+
+      // Animate preview characters (skip for cat since it uses CSS animations)
+      if (!char.isCat) {
+        startAnimation(`prev-thinking-${id}`, char.path, { fps: 2, frames: ["thinking","thinking","thinking","thinking","thinking","thinking"] });
+        startAnimation(`prev-excited-${id}`, char.path, { fps: 8, frames: ["idle","excited","happy","excited","excited","happy","excited","idle","idle"] });
+        startAnimation(`prev-sad-${id}`, char.path, { fps: 4, frames: ["idle","sad","sad","sad","idle","sad","sad","sad","sad","idle"] });
+        startAnimation(`prev-idle-${id}`, char.path, { fps: 4, frames: ["idle","idle","idle","idle","idle","idle","thinking","idle","idle","idle","idle","idle","idle","idle","thinking","thinking","idle"] });
+      }
+    });
+
+    // ── Build "All" section by cloning each character block ──────
+    const allSection = document.getElementById("section-all");
+    Object.entries(CHARS).forEach(([id, char]) => {
+      const block = document.createElement("div");
+      block.className = "all-char-block";
+
+      if (char.isCat) {
+        block.innerHTML = `<div class="char-title">${char.label}</div><div class="grid" id="all-grid-${id}"></div>`;
+        allSection.appendChild(block);
+        const catGrid = block.querySelector(`#all-grid-${id}`);
+        const CAT_ANIMATIONS = [
+          { label: "Idle Bob", cls: "cat-idle-bob" },
+          { label: "Walk", cls: "cat-walk" },
+          { label: "Jump", cls: "cat-jump" },
+          { label: "Excited", cls: "cat-excited" },
+          { label: "Scared / Error", cls: "cat-scared" },
+          { label: "Sad", cls: "cat-sad" },
+          { label: "Spin / Celebrate", cls: "cat-spin" },
+          { label: "Wall Climb", cls: "cat-climb" },
+          { label: "Fall + Land", cls: "cat-fall" },
+          { label: "Sleep", cls: "cat-sleep" },
+          { label: "Peek", cls: "cat-peek" },
+          { label: "Zoom Across", cls: "cat-zoom" },
+        ];
+        CAT_ANIMATIONS.forEach((anim, i) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          const imgId = `all-cat-${i}`;
+          card.innerHTML = `<div class="stage"><img id="${imgId}" class="char ${anim.cls}" src="${char.path}.png"/></div><div class="ground"></div><label>${anim.label}</label>`;
+          catGrid.appendChild(card);
+        });
+      } else {
+        block.innerHTML = `<div class="char-title">${char.label}</div><div class="grid" id="all-grid-${id}"></div>`;
+        allSection.appendChild(block);
+        const frameGrid = block.querySelector(`#all-grid-${id}`);
+        SEQUENCES.forEach((seq, i) => {
+          const imgId = `all-${id}-${i}`;
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `<div class="stage"><img id="${imgId}" class="char" src="${char.path}-idle-256.png"/></div><div class="ground"></div><label>${seq.label}</label><div class="fps-note">${seq.fps} fps · ${seq.frames.length} frames</div>`;
+          frameGrid.appendChild(card);
+          startAnimation(imgId, char.path, seq);
+        });
+      }
+    });
+
+    // ── Frame cycling engine ──────────────────────────────────────
+    function startAnimation(imgId, charPath, seq) {
+      const img = document.getElementById(imgId);
+      if (!img) return;
+      let idx = 0;
+      setInterval(() => {
+        img.src = `${charPath}-${seq.frames[idx]}-256.png`;
+        idx = (idx + 1) % seq.frames.length;
+      }, 1000 / seq.fps);
+    }
+
+    // ── Tab switching ─────────────────────────────────────────────
+    function show(id, e) {
+      document.querySelectorAll(".character-section").forEach(s => s.classList.remove("active"));
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.getElementById("section-" + id).classList.add("active");
+      e.target.classList.add("active");
+    }
+  </script>
 </body>
 </html>

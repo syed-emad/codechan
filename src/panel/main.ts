@@ -1,5 +1,7 @@
 declare const window: Window & {
   CLIPPY_ANIMATIONS: Record<string, string[] | string>;
+  STATIC_MOOD_SPRITES: Record<string, string>;
+  CHARACTER_MODE: "clippy" | "cat" | "static";
   CLIPPY_FALLBACK: string;
   CLIPPY_CHARACTER: string;
   CAT_SPRITE: string;
@@ -52,7 +54,20 @@ function playCatAnimation(mood: string): void {
   void img.offsetWidth;
   img.classList.add(cssClass);
 
-  // Show/hide zzz
+  if (mood === "sleeping") {
+    zzz.style.opacity = "1";
+    zzz.style.animation = "zzz-float 3s ease-in-out infinite";
+  } else {
+    zzz.style.opacity = "0";
+    zzz.style.animation = "none";
+  }
+}
+
+function playStaticAnimation(mood: string): void {
+  const sprites = window.STATIC_MOOD_SPRITES ?? {};
+  img.className = "";
+  img.src = sprites[mood] ?? sprites["idle"] ?? window.CLIPPY_FALLBACK;
+
   if (mood === "sleeping") {
     zzz.style.opacity = "1";
     zzz.style.animation = "zzz-float 3s ease-in-out infinite";
@@ -64,16 +79,16 @@ function playCatAnimation(mood: string): void {
 
 // ── Unified play ─────────────────────────────────────────────
 function playAnimation(mood: string, loop = true): void {
-  // Pop-in on state change (both characters)
   img.classList.remove("pop-in");
   void img.offsetWidth;
   img.classList.add("pop-in");
   setTimeout(() => img.classList.remove("pop-in"), 260);
 
-  if (window.IS_CAT) {
+  if (window.CHARACTER_MODE === "cat") {
     playCatAnimation(mood);
+  } else if (window.CHARACTER_MODE === "static") {
+    playStaticAnimation(mood);
   } else {
-    // Clippy: extra CSS class for sad/thinking
     img.className = "";
     if (mood === "thinking") { img.classList.add("thinking"); }
     if (mood === "sad" || mood === "scared") { img.classList.add("clippy-sad"); }

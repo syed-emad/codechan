@@ -1,8 +1,8 @@
 {
-  "name": "code-chan",
-  "displayName": "Code-Chan",
-  "description": "Your sarcastic coding buddy. Code-Chan lives in your sidebar and roasts you while you code — reacting to saves, errors, streaks, and late nights.",
-  "version": "0.1.0",
+  "name": "code-chan-buddy",
+  "displayName": "Code-Chan Buddy",
+  "description": "Your coding companion with personality. Code-Chan lives in your sidebar, reacts to your code with funny, motivational, and sarcastic messages — celebrating wins and calling out your habits.",
+  "version": "0.1.1",
   "publisher": "syedemad",
   "engines": {
     "vscode": "^1.116.0"
@@ -13,6 +13,7 @@
     "type": "git",
     "url": "https://github.com/syedemad/code-chan"
   },
+  "icon": "media/icon.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
@@ -21,6 +22,13 @@
   "main": "./out/extension/extension.js",
   "contributes": {
     "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "code-chan-activity",
+          "title": "Code-Chan",
+          "icon": "media/icon.svg"
+        }
+      ],
       "panel": [
         {
           "id": "code-chan-panel",
@@ -34,6 +42,13 @@
         {
           "type": "webview",
           "id": "code-chan.sidebar",
+          "name": "Code-Chan"
+        }
+      ],
+      "code-chan-activity": [
+        {
+          "type": "webview",
+          "id": "code-chan.activity",
           "name": "Code-Chan"
         }
       ],
@@ -60,7 +75,7 @@
       "view/title": [
         {
           "command": "code-chan.selectCharacter",
-          "when": "view == code-chan.sidebar || view == code-chan.bottomPanel",
+          "when": "view == code-chan.sidebar || view == code-chan.activity || view == code-chan.bottomPanel",
           "group": "navigation"
         }
       ]
@@ -70,10 +85,13 @@
       "properties": {
         "code-chan.character": {
           "type": "string",
-          "enum": ["clippy", "cat"],
+          "enum": ["clippy", "cat", "kaen", "ren", "yuki"],
           "enumDescriptions": [
             "Clippy — the classic paperclip assistant",
-            "Cool Cat — a pixel cat with sunglasses"
+            "Cool Cat — a pixel cat with sunglasses",
+            "Kaen — anime companion",
+            "Ren — anime companion",
+            "Yuki — anime companion"
           ],
           "default": "clippy",
           "description": "Which character to show in the panel"

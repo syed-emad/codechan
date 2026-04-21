@@ -4,7 +4,8 @@ export type CharacterState =
   | "happy"
   | "sad"
   | "excited"
-  | "thinking";
+  | "thinking"
+  | "sarcastic"
 
 export type MessageCategory =
   | "greeting"

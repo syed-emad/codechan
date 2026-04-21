@@ -1,101 +1,81 @@
-# Clippy-Chan
+# Code-Chan Buddy
 
-Your sarcastic coding buddy for VS Code.
+Your coding companion with personality.
 
-Clippy-Chan lives in your sidebar and panel, reacts to your coding behavior, and drops funny or motivational messages while you work.
+Code-Chan lives in your VS Code sidebar and panel, reacts to what you're doing, and drops messages that are equal parts motivational, funny, and sarcastic — celebrating your wins and calling out your habits.
 
-![Clippy-Chan Character](media/cat.png)
+## Why Code-Chan Buddy?
 
-## Why Clippy-Chan?
+Most coding companions are cute but passive. Code-Chan actually reacts to what's happening in your editor.
 
-Most coding companions are cute but passive.
-Clippy-Chan is intentionally opinionated.
+Fix all your errors? It goes wild. Save 10 times in a row? It notices. Coding past midnight? It has opinions.
 
-It reacts to real editor events like:
-- frequent saves
-- new errors appearing
-- errors getting fixed
-- long coding sessions
-- late-night coding
-- file switching
-- idle/return behavior
+It reacts to real editor events:
+- Frequent saves and save streaks
+- Errors appearing and getting fixed
+- Long coding sessions (30 / 60 / 90 min check-ins)
+- Late-night coding
+- File switching
+- Idle / return detection with sleep mode
 
 The result is a companion that feels alive, not static.
 
 ## Features
 
-- Two character modes
-  - Clippy (classic assistant vibe)
-  - Cool Cat (pixel cat with sunglasses)
-- Smart event triggers
-  - save reactions and save streak callouts (5 and 10)
-  - diagnostics-aware messages when errors appear or are fixed
-  - idle detection, sleep mode, and return messages
-  - long-session reminders (30/60/90 min)
-  - late-night commentary
-  - file-switch reactions
-- Adjustable message frequency
-  - low
-  - medium
-  - high
-- Dual surfaces
-  - sidebar webview
-  - bottom panel webview
-- Quick character switching from the panel title bar
-- Status bar shortcut for instant manual messages
+- **5 characters** — Clippy, Cool Cat, Kaen, Ren, Yuki
+- **Multi-character support** — show multiple buddies side by side at once
+- **Smart event triggers** — reacts to saves, errors, streaks, idle, session length, time of day
+- **Mixed tone** — motivational when you need it, sarcastic when you deserve it
+- **Adjustable frequency** — low / medium / high message rate
+- **Two surfaces** — sidebar and bottom panel
+- **Quick picker** — add or swap characters from the panel title bar
+- **Status bar shortcut** — instant message on demand
+
+## Characters
+
+- **Clippy** — the classic paperclip assistant, fully animated
+- **Cool Cat** — pixel cat with sunglasses and CSS animations
+- **Kaen** — anime companion with 6 emotion sprites
+- **Ren** — anime companion with 6 emotion sprites
+- **Yuki** — anime companion with 6 emotion sprites
 
 ## Commands
 
-- Clippy-Chan: Show Message
-  - Manually trigger a random Clippy-Chan message.
-- Select Character
-  - Switch between Clippy and Cool Cat quickly.
+- **Code-Chan: Show Message** — manually trigger a random message
+- **Select Character** — open the multi-select character picker
 
 ## Extension Settings
 
-This extension contributes the following settings:
-
-- clippy-chan.character
-  - Select which character is shown.
-  - Options: clippy, cat
-  - Default: clippy
-- clippy-chan.messageFrequency
-  - Controls how often automatic messages can appear.
-  - Options: low, medium, high
-  - Default: medium
+- `code-chan.characters` — array of characters to show (pick multiple)
+  - Options: `clippy`, `cat`, `kaen`, `ren`, `yuki`
+  - Default: `["clippy"]`
+- `code-chan.messageFrequency` — how often messages appear
+  - Options: `low`, `medium`, `high`
+  - Default: `medium`
 
 ## How It Works
 
-Clippy-Chan listens to VS Code activity signals and posts contextual messages to its webview UI.
-A cooldown system prevents message spam, while milestone events can bypass cooldown when they matter.
-
-## Perfect For
-
-- devs who like playful motivation while coding
-- long focus sessions where reminders help
-- people who want personality in their editor without heavy setup
+Code-Chan listens to VS Code activity signals and posts contextual messages to its webview. A cooldown system prevents spam while milestone events (errors fixed, streaks, session length) always break through.
 
 ## Privacy
 
-Clippy-Chan does not send your code to external services.
-It reacts to local editor events only.
-
-## Known Notes
-
-- Character changes refresh the webview so the new sprite set appears.
-- Message tone is intentionally sarcastic in many categories.
+Code-Chan does not send your code anywhere. Everything happens locally in your editor.
 
 ## Release Notes
 
+### 0.1.1
+
+- Multi-character support — show multiple buddies side by side
+- Added Kaen, Ren, Yuki anime characters
+- Multi-select character picker
+
 ### 0.1.0
 
-- Initial public release
-- Animated Clippy/Cool Cat companion
+- Initial release
+- Animated Clippy and Cool Cat companions
 - Event-driven message system
-- Sidebar + panel support
-- Character picker and status bar command
+- Sidebar and panel support
 
 ## Feedback
 
-Have ideas, message packs, or character requests?
-Open an issue or share feedback in the repo.
+Have ideas, message packs, or character suggestions? Open an issue in the repo.

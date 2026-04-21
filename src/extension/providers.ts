@@ -23,7 +23,6 @@ const CLIPPY_ANIMATIONS: Record<string, string[][]> = {
 // ── Cat: single PNG + CSS animations ────────────────────────────
 const CAT_SPRITE = ["media", "characters", "cat", "static", "cat.png"];
 
-// Cat uses CSS class names — panel JS applies them
 const CAT_CSS_ANIMATIONS: Record<string, string> = {
   idle:     "cat-idle",
   happy:    "cat-excited",
@@ -33,6 +32,28 @@ const CAT_CSS_ANIMATIONS: Record<string, string> = {
   thinking: "cat-idle",
   scared:   "cat-scared",
   sleeping: "cat-sleep",
+};
+
+// ── Static anime characters ──────────────────────────────────────
+function staticSprites(charName: string): Record<string, string[]> {
+  const base = ["media", "characters", charName, "static"];
+  const f = (e: string) => [...base, `${charName}-${e}-256.png`];
+  return {
+    idle:     f("idle"),
+    happy:    f("happy"),
+    sad:      f("sad"),
+    talking:  f("talking"),
+    thinking: f("thinking"),
+    excited:  f("excited"),
+    scared:   f("sad"),
+    sleeping: f("idle"),
+  };
+}
+
+const STATIC_CHARS: Record<string, Record<string, string[]>> = {
+  kaen: staticSprites("kaen"),
+  yuki: staticSprites("yuki"),
+  ren:  staticSprites("ren"),
 };
 
 export class CodeChanViewProvider implements vscode.WebviewViewProvider {
@@ -89,13 +110,27 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
     const nonce = getNonce();
 
     let animationsJson: string;
+    let staticSpritesJson = "{}";
     let catSpriteUri = "";
     let isCat = false;
+    let characterMode: "clippy" | "cat" | "static" = "clippy";
 
     if (character === "cat") {
       isCat = true;
+      characterMode = "cat";
       catSpriteUri = this.toUri(webview, CAT_SPRITE);
       animationsJson = JSON.stringify(CAT_CSS_ANIMATIONS);
+    } else if (STATIC_CHARS[character]) {
+      characterMode = "static";
+      animationsJson = "{}";
+      staticSpritesJson = JSON.stringify(
+        Object.fromEntries(
+          Object.entries(STATIC_CHARS[character]).map(([mood, segs]) => [
+            mood,
+            this.toUri(webview, segs),
+          ])
+        )
+      );
     } else {
       animationsJson = JSON.stringify(
         Object.fromEntries(
@@ -109,7 +144,9 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
 
     const fallbackUri = character === "cat"
       ? catSpriteUri
-      : this.toUri(webview, ["media", "characters", "clippy", "static", "idle.png"]);
+      : STATIC_CHARS[character]
+        ? this.toUri(webview, STATIC_CHARS[character].idle)
+        : this.toUri(webview, ["media", "characters", "clippy", "static", "idle.png"]);
 
     return /*html*/ `<!DOCTYPE html>
 <html lang="en">
@@ -291,6 +328,8 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
     window.CLIPPY_CHARACTER  = "${character}";
     window.CAT_SPRITE        = "${catSpriteUri}";
     window.IS_CAT            = ${isCat};
+    window.CHARACTER_MODE    = "${characterMode}";
+    window.STATIC_MOOD_SPRITES = ${staticSpritesJson};
   </script>
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>

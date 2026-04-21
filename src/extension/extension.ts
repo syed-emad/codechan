@@ -3,20 +3,24 @@ import { CodeChanViewProvider } from "./providers";
 import { TriggerManager } from "./triggers";
 
 const SIDEBAR_VIEW = "code-chan.sidebar";
+const ACTIVITY_VIEW = "code-chan.activity";
 const PANEL_VIEW = "code-chan.bottomPanel";
 
 export function activate(context: vscode.ExtensionContext) {
   const sidebarProvider = new CodeChanViewProvider(context.extensionUri, SIDEBAR_VIEW);
+  const activityProvider = new CodeChanViewProvider(context.extensionUri, ACTIVITY_VIEW);
   const panelProvider = new CodeChanViewProvider(context.extensionUri, PANEL_VIEW);
 
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(SIDEBAR_VIEW, sidebarProvider),
+    vscode.window.registerWebviewViewProvider(ACTIVITY_VIEW, activityProvider),
     vscode.window.registerWebviewViewProvider(PANEL_VIEW, panelProvider)
   );
 
   // Broadcast to both panels
   const send = (text: string, category: string, mood: string) => {
     sidebarProvider.sendMessage(text, category, mood);
+    activityProvider.sendMessage(text, category, mood);
     panelProvider.sendMessage(text, category, mood);
   };
 
@@ -24,8 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("code-chan.character")) {
-        // Trigger a reload by re-resolving the webview
-        [sidebarProvider, panelProvider].forEach((p) => p.refresh());
+        [sidebarProvider, activityProvider, panelProvider].forEach((p) => p.refresh());
       }
     })
   );
@@ -44,12 +47,15 @@ export function activate(context: vscode.ExtensionContext) {
   statusBarItem.show();
   context.subscriptions.push(statusBarItem);
 
-  // Character selector — opens quick pick like vscode-pets
+  // Character selector
   context.subscriptions.push(
     vscode.commands.registerCommand("code-chan.selectCharacter", async () => {
       const characters = [
-        { label: "🧷  Clippy", description: "The classic paperclip assistant", value: "clippy" },
-        { label: "😎  Cool Cat", description: "Pixel cat with sunglasses", value: "cat" },
+        { label: "🧷  Clippy",    description: "The classic paperclip assistant", value: "clippy" },
+        { label: "😎  Cool Cat",  description: "Pixel cat with sunglasses",        value: "cat"    },
+        { label: "🔥  Kaen",      description: "Anime companion",                  value: "kaen"   },
+        { label: "⚔️  Ren",       description: "Anime companion",                  value: "ren"    },
+        { label: "❄️  Yuki",      description: "Anime companion",                  value: "yuki"   },
       ];
 
       const current = vscode.workspace.getConfiguration("code-chan").get<string>("character", "clippy");
@@ -68,7 +74,7 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.workspace.getConfiguration("code-chan").update(
           "character", selected.value, vscode.ConfigurationTarget.Global
         );
-        vscode.window.showInformationMessage(`Code-Chan: switched to ${selected.label.replace(" ✓", "")}! Reload the panel to see your new character.`);
+        vscode.window.showInformationMessage(`Code-Chan: switched to ${selected.label.replace(" ✓", "")}!`);
       }
     })
   );
