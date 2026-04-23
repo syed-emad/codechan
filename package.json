@@ -2,7 +2,7 @@
   "name": "codechan",
   "displayName": "CodeChan",
   "description": "Your coding companion with personality. Code-Chan lives in your sidebar, reacts to your code with funny, motivational, and sarcastic messages — celebrating wins and calling out your habits.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "syedemad",
   "engines": {
     "vscode": "^1.116.0"
