@@ -356,11 +356,11 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
 
   <script nonce="${nonce}">
     window.CLIPPY_ANIMATIONS   = ${animationsJson};
-    window.CLIPPY_FALLBACK     = "${fallbackUri}";
-    window.CLIPPY_CHARACTER    = "${character}";
-    window.CAT_SPRITE          = "${catSpriteUri}";
-    window.IS_CAT              = ${isCat};
-    window.CHARACTER_MODE      = "${characterMode}";
+    window.CLIPPY_FALLBACK     = ${JSON.stringify(fallbackUri)};
+    window.CLIPPY_CHARACTER    = ${JSON.stringify(character)};
+    window.CAT_SPRITE          = ${JSON.stringify(catSpriteUri)};
+    window.IS_CAT              = ${JSON.stringify(isCat)};
+    window.CHARACTER_MODE      = ${JSON.stringify(characterMode)};
     window.STATIC_MOOD_SPRITES = ${staticSpritesJson};
     window.CUSTOM_ANIMATIONS   = ${customAnimationsJson};
   </script>
