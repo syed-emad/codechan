@@ -1,4 +1,4 @@
-# Clippy-Chan — VS Code Motivational Companion Extension
+# CodeChan — VS Code Motivational Companion Extension
 
 ## What This Project Is
 A VS Code extension that places an animated clippy/anime-style cartoon character in the editor sidebar. The character reacts to your coding activity with motivating, funny, or sarcastic messages — like a desk buddy who keeps you going.
