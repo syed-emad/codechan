@@ -1,10 +1,11 @@
-# CodeChan
-
-**Turn anyone into your coding buddy.**
-
-Got a favourite anime character? A friend? A meme? Drop their images into a folder, write a `character.json`, and they'll live in your VS Code sidebar — reacting to your code, roasting your saves, and celebrating your wins.
-
-Or just pick one of the ready-made buddies and start in seconds.
+<div align="center">
+  <h1>CodeChan</h1>
+  <img src="media/CodeChanBanner.png" alt="CodeChan banner" width="620" />
+  <p><strong>Turn anyone into your coding buddy.</strong></p>
+  <p>Got a favourite anime character, friend, or meme? Bring them into VS Code with custom animations and personality.</p>
+  <p>Or just pick one of the ready-made buddies and start in seconds.</p>
+  <p><a href="https://github.com/syed-emad/codechan/issues">Report a Bug</a> · <a href="https://github.com/syed-emad/codechan/issues/new">Request Feature</a></p>
+</div>
 
 ---
 
