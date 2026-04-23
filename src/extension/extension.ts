@@ -3,6 +3,7 @@ import { CodeChanViewProvider } from "./providers";
 import { TriggerManager } from "./triggers";
 import { loadCommunityChars, getCharactersDir, CharPack } from "./charLoader";
 import { registerPreviewCommand } from "./preview";
+import * as fs from "fs";
 
 const SIDEBAR_VIEW = "code-chan.sidebar";
 const ACTIVITY_VIEW = "code-chan.activity";
@@ -18,6 +19,9 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerWebviewViewProvider(ACTIVITY_VIEW, activityProvider),
     vscode.window.registerWebviewViewProvider(PANEL_VIEW, panelProvider)
   );
+
+  // Ensure characters folder exists so users can open it right away
+  fs.mkdirSync(getCharactersDir(), { recursive: true });
 
   // Load community character packs
   let communityChars = loadCommunityChars();
