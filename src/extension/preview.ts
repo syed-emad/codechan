@@ -3,6 +3,24 @@ import * as fs from "fs";
 import * as path from "path";
 import { CharPack, getCharactersDir } from "./charLoader";
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function getNonce(): string {
+  let text = "";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 32; i++) {
+    text += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return text;
+}
+
 const SEQUENCES: Array<{ label: string; fps: number; frames: string[] }> = [
   { label: "Idle — blink", fps: 4,  frames: ["idle","idle","idle","idle","idle","idle","thinking","idle","idle","idle","idle","idle","idle","idle","thinking","thinking","idle"] },
   { label: "Talking",      fps: 8,  frames: ["idle","talking","idle","talking","talking","idle","talking","idle","idle","talking"] },
@@ -101,15 +119,18 @@ function buildPreviewHtml(webview: vscode.Webview, pack: CharPack): string {
 
   const spritesJson  = JSON.stringify(spriteUris);
   const sequencesJson = JSON.stringify(sequences);
+  const nonce = getNonce();
+
+  const metaText = `${pack.author ? `by ${pack.author}` : ""}${pack.description ? " — " + pack.description : ""} · ${pack.emotions.length} emotions`;
 
   return /* html */`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'none'; img-src ${webview.cspSource} data:; script-src 'unsafe-inline'; style-src 'unsafe-inline';">
-  <title>Preview: ${pack.name}</title>
-  <style>
+    content="default-src 'none'; img-src ${webview.cspSource} data:; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}';">
+  <title>Preview: ${escapeHtml(pack.name)}</title>
+  <style nonce="${nonce}">
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #1a1a2e; color: #eee; font-family: monospace; padding: 24px; }
     h1  { color: #fff; font-size: 20px; margin-bottom: 4px; }
@@ -158,17 +179,24 @@ function buildPreviewHtml(webview: vscode.Webview, pack: CharPack): string {
   </style>
 </head>
 <body>
-  <h1>${pack.name}</h1>
-  <div class="meta">${pack.author ? `by ${pack.author}` : ""}${pack.description ? " — " + pack.description : ""} · ${pack.emotions.length} emotions</div>
+  <h1>${escapeHtml(pack.name)}</h1>
+  <div class="meta">${escapeHtml(metaText)}</div>
 
   <div class="grid" id="grid"></div>
 
   <div class="preview-row" id="preview-row"></div>
 
-  <script>
+  <script nonce="${nonce}">
     const SPRITES   = ${spritesJson};
     const SEQUENCES = ${sequencesJson};
     const FALLBACK  = ${JSON.stringify(fallback)};
+    const PACK_ANIMATIONS = ${JSON.stringify(pack.animations)};
+
+    function escapeText(s) {
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
 
     function startAnim(imgEl, seq) {
       const frames = seq.frames;
@@ -181,19 +209,35 @@ function buildPreviewHtml(webview: vscode.Webview, pack: CharPack): string {
       }, 1000 / seq.fps);
     }
 
-    // Animation grid
+    // Animation grid — use DOM methods instead of innerHTML
     const grid = document.getElementById("grid");
     SEQUENCES.forEach((seq, i) => {
       const card = document.createElement("div");
       card.className = "card";
-      card.innerHTML = \`
-        <div class="stage"><img id="img-\${i}" class="char" /></div>
-        <div class="ground"></div>
-        <label>\${seq.label}</label>
-        <div class="fps-note">\${seq.fps} fps · \${seq.frames.length} frames</div>
-      \`;
+
+      const stage = document.createElement("div");
+      stage.className = "stage";
+      const img = document.createElement("img");
+      img.id = "img-" + i;
+      img.className = "char";
+      stage.appendChild(img);
+
+      const ground = document.createElement("div");
+      ground.className = "ground";
+
+      const lbl = document.createElement("label");
+      lbl.textContent = seq.label;
+
+      const fps = document.createElement("div");
+      fps.className = "fps-note";
+      fps.textContent = seq.fps + " fps · " + seq.frames.length + " frames";
+
+      card.appendChild(stage);
+      card.appendChild(ground);
+      card.appendChild(lbl);
+      card.appendChild(fps);
       grid.appendChild(card);
-      startAnim(document.getElementById("img-\${i}"), seq);
+      startAnim(img, seq);
     });
 
     // Preview row — key moods with speech bubbles
@@ -208,16 +252,30 @@ function buildPreviewHtml(webview: vscode.Webview, pack: CharPack): string {
     PREVIEWS.forEach((p, i) => {
       const div = document.createElement("div");
       div.className = "preview-char";
-      div.innerHTML = \`
-        <div class="bubble">\${p.bubble}</div>
-        <img id="prev-\${i}" class="preview-img" />
-        <div class="preview-ground"></div>
-        <div class="preview-label">\${p.mood}</div>
-      \`;
+
+      const bubbleEl = document.createElement("div");
+      bubbleEl.className = "bubble";
+      bubbleEl.textContent = p.bubble;
+
+      const prevImg = document.createElement("img");
+      prevImg.id = "prev-" + i;
+      prevImg.className = "preview-img";
+
+      const prevGround = document.createElement("div");
+      prevGround.className = "preview-ground";
+
+      const prevLabel = document.createElement("div");
+      prevLabel.className = "preview-label";
+      prevLabel.textContent = p.mood;
+
+      div.appendChild(bubbleEl);
+      div.appendChild(prevImg);
+      div.appendChild(prevGround);
+      div.appendChild(prevLabel);
       row.appendChild(div);
-      // use pack's own sequence for this mood if available, else use default
-      const packSeq = ${JSON.stringify(pack.animations)}[p.mood];
-      startAnim(document.getElementById("prev-\${i}"), packSeq || p.seq);
+
+      const packSeq = PACK_ANIMATIONS[p.mood];
+      startAnim(prevImg, packSeq || p.seq);
     });
   </script>
 </body>
