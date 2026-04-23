@@ -1,7 +1,8 @@
 declare const window: Window & {
   CLIPPY_ANIMATIONS: Record<string, string[] | string>;
   STATIC_MOOD_SPRITES: Record<string, string>;
-  CHARACTER_MODE: "clippy" | "cat" | "static";
+  CUSTOM_ANIMATIONS: Record<string, { fps: number; frames: string[] }>;
+  CHARACTER_MODE: "clippy" | "cat" | "static" | "custom";
   CLIPPY_FALLBACK: string;
   CLIPPY_CHARACTER: string;
   CAT_SPRITE: string;
@@ -77,6 +78,40 @@ function playStaticAnimation(mood: string): void {
   }
 }
 
+// ── Sequence animator (community packs) ──────────────────────
+function playCustomAnimation(mood: string, loop: boolean): void {
+  clearInterval(frameTimer);
+  const anims = window.CUSTOM_ANIMATIONS ?? {};
+  const seq = anims[mood] ?? anims["idle"];
+  if (!seq?.frames?.length) {
+    // fallback: just show the sprite for that mood
+    const sprites = window.STATIC_MOOD_SPRITES ?? {};
+    img.src = sprites[mood] ?? sprites["idle"] ?? window.CLIPPY_FALLBACK;
+    return;
+  }
+
+  const sprites = window.STATIC_MOOD_SPRITES ?? {};
+  let idx = 0;
+  img.src = sprites[seq.frames[0]] ?? window.CLIPPY_FALLBACK;
+  if (seq.frames.length === 1) { return; }
+
+  frameTimer = window.setInterval(() => {
+    idx++;
+    if (idx >= seq.frames.length) {
+      if (loop) { idx = 0; } else { clearInterval(frameTimer); playCustomAnimation("idle", true); return; }
+    }
+    img.src = sprites[seq.frames[idx]] ?? window.CLIPPY_FALLBACK;
+  }, 1000 / seq.fps);
+
+  if (mood === "sleeping") {
+    zzz.style.opacity = "1";
+    zzz.style.animation = "zzz-float 3s ease-in-out infinite";
+  } else {
+    zzz.style.opacity = "0";
+    zzz.style.animation = "none";
+  }
+}
+
 // ── Unified play ─────────────────────────────────────────────
 function playAnimation(mood: string, loop = true): void {
   img.classList.remove("pop-in");
@@ -84,7 +119,10 @@ function playAnimation(mood: string, loop = true): void {
   img.classList.add("pop-in");
   setTimeout(() => img.classList.remove("pop-in"), 260);
 
-  if (window.CHARACTER_MODE === "cat") {
+  if (window.CHARACTER_MODE === "custom") {
+    img.className = "";
+    playCustomAnimation(mood, loop);
+  } else if (window.CHARACTER_MODE === "cat") {
     playCatAnimation(mood);
   } else if (window.CHARACTER_MODE === "static") {
     playStaticAnimation(mood);

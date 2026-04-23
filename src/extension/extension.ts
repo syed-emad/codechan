@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { CodeChanViewProvider } from "./providers";
 import { TriggerManager } from "./triggers";
+import { loadCommunityChars, getCharactersDir, CharPack } from "./charLoader";
 
 const SIDEBAR_VIEW = "code-chan.sidebar";
 const ACTIVITY_VIEW = "code-chan.activity";
@@ -17,24 +18,43 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.window.registerWebviewViewProvider(PANEL_VIEW, panelProvider)
   );
 
-  // Broadcast to both panels
+  // Load community character packs
+  let communityChars = loadCommunityChars();
+  const communityMap = new Map<string, CharPack>(communityChars.map((p) => [p.id, p]));
+  [sidebarProvider, activityProvider, panelProvider].forEach((p) => p.setCommunityChars(communityChars));
+
+  // Broadcast to all panels
   const send = (text: string, category: string, mood: string) => {
     sidebarProvider.sendMessage(text, category, mood);
     activityProvider.sendMessage(text, category, mood);
     panelProvider.sendMessage(text, category, mood);
   };
 
-  // Reload webview when character setting changes
+  // Wire up all triggers
+  const triggers = new TriggerManager(send);
+
+  // Apply custom messages if a community character is active at startup
+  const applyCharacterMessages = () => {
+    const charId = vscode.workspace.getConfiguration("code-chan").get<string>("character", "clippy");
+    const pack = communityMap.get(charId);
+    if (pack && Object.keys(pack.messages).length > 0) {
+      triggers.setCustomMessages(pack.messages);
+    } else {
+      triggers.clearCustomMessages();
+    }
+  };
+  applyCharacterMessages();
+
+  // Reload webview + messages when character setting changes
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("code-chan.character")) {
+        applyCharacterMessages();
         [sidebarProvider, activityProvider, panelProvider].forEach((p) => p.refresh());
       }
     })
   );
 
-  // Wire up all triggers
-  const triggers = new TriggerManager(send);
   triggers.register(context);
 
   // Status bar
@@ -50,18 +70,34 @@ export function activate(context: vscode.ExtensionContext) {
   // Character selector
   context.subscriptions.push(
     vscode.commands.registerCommand("code-chan.selectCharacter", async () => {
-      const characters = [
-        { label: "🧷  Clippy",    description: "The classic paperclip assistant", value: "clippy" },
-        { label: "😎  Cool Cat",  description: "Pixel cat with sunglasses",        value: "cat"    },
-        { label: "🔥  Kaen",      description: "Anime companion",                  value: "kaen"   },
-        { label: "⚔️  Ren",       description: "Anime companion",                  value: "ren"    },
-        { label: "❄️  Yuki",      description: "Anime companion",                  value: "yuki"   },
+      const builtIns = [
+        { label: "🧷  Clippy",   description: "The classic paperclip assistant", value: "clippy" },
+        { label: "😎  Cool Cat", description: "Pixel cat with sunglasses",        value: "cat"    },
+        { label: "🔥  Kaen",     description: "Anime companion",                  value: "kaen"   },
+        { label: "⚔️  Ren",      description: "Anime companion",                  value: "ren"    },
+        { label: "❄️  Yuki",     description: "Anime companion",                  value: "yuki"   },
       ];
 
+      const community = communityChars.map((p) => ({
+        label: `📦  ${p.name}`,
+        description: p.author ? `by ${p.author}${p.description ? " — " + p.description : ""}` : p.description,
+        value: p.id,
+      }));
+
+      const separator = community.length > 0
+        ? [{ label: "── Community Packs ──", kind: vscode.QuickPickItemKind.Separator, value: "" }]
+        : [];
+
+      const openFolder = {
+        label: "📁  Open characters folder",
+        description: getCharactersDir(),
+        value: "__open_folder__",
+      };
+
+      const all = [...builtIns, ...separator, ...community, openFolder];
       const current = vscode.workspace.getConfiguration("code-chan").get<string>("character", "clippy");
-      const picks = characters.map((c) => ({
+      const picks = all.map((c) => ({
         ...c,
-        picked: c.value === current,
         label: c.value === current ? `${c.label}  ✓` : c.label,
       }));
 
@@ -70,12 +106,18 @@ export function activate(context: vscode.ExtensionContext) {
         placeHolder: "Choose your companion",
       });
 
-      if (selected) {
-        await vscode.workspace.getConfiguration("code-chan").update(
-          "character", selected.value, vscode.ConfigurationTarget.Global
-        );
-        vscode.window.showInformationMessage(`Code-Chan: switched to ${selected.label.replace(" ✓", "")}!`);
+      if (!selected) { return; }
+
+      if (selected.value === "__open_folder__") {
+        const dir = vscode.Uri.file(getCharactersDir());
+        await vscode.env.openExternal(dir);
+        return;
       }
+
+      await vscode.workspace.getConfiguration("code-chan").update(
+        "character", selected.value, vscode.ConfigurationTarget.Global
+      );
+      vscode.window.showInformationMessage(`Code-Chan: switched to ${selected.label.replace("  ✓", "")}!`);
     })
   );
 

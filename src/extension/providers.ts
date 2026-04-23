@@ -1,4 +1,7 @@
 import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
+import { CharPack, getCharactersDir } from "./charLoader";
 
 // ── Clippy: frame-based animations ──────────────────────────────
 function clippyFrames(dir: string, count: number): string[][] {
@@ -58,11 +61,16 @@ const STATIC_CHARS: Record<string, Record<string, string[]>> = {
 
 export class CodeChanViewProvider implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
+  private communityChars: Map<string, CharPack> = new Map();
 
   constructor(
     private readonly extensionUri: vscode.Uri,
     public readonly viewType: string
   ) {}
+
+  setCommunityChars(packs: CharPack[]): void {
+    this.communityChars = new Map(packs.map((p) => [p.id, p]));
+  }
 
   resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -72,7 +80,10 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
     this.view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
-      localResourceRoots: [this.extensionUri],
+      localResourceRoots: [
+        this.extensionUri,
+        vscode.Uri.file(getCharactersDir()),
+      ],
     };
     webviewView.webview.html = this.getHtml(webviewView.webview);
     webviewView.webview.onDidReceiveMessage((msg) => {
@@ -98,6 +109,10 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
     ).toString();
   }
 
+  private toFileUri(webview: vscode.Webview, absPath: string): string {
+    return webview.asWebviewUri(vscode.Uri.file(absPath)).toString();
+  }
+
   private getCharacter(): string {
     return vscode.workspace.getConfiguration("code-chan").get<string>("character", "clippy");
   }
@@ -111,11 +126,26 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
 
     let animationsJson: string;
     let staticSpritesJson = "{}";
+    let customAnimationsJson = "{}";
     let catSpriteUri = "";
     let isCat = false;
-    let characterMode: "clippy" | "cat" | "static" = "clippy";
+    let characterMode: "clippy" | "cat" | "static" | "custom" = "clippy";
 
-    if (character === "cat") {
+    // ── Community character pack ──────────────────────────────
+    const communityPack = this.communityChars.get(character);
+    if (communityPack) {
+      characterMode = "custom";
+      animationsJson = "{}";
+      customAnimationsJson = JSON.stringify(communityPack.animations);
+      const sprites: Record<string, string> = {};
+      for (const emotion of communityPack.emotions) {
+        const imgPath = path.join(communityPack.dir, `${emotion}.png`);
+        if (fs.existsSync(imgPath)) {
+          sprites[emotion] = this.toFileUri(webview, imgPath);
+        }
+      }
+      staticSpritesJson = JSON.stringify(sprites);
+    } else if (character === "cat") {
       isCat = true;
       characterMode = "cat";
       catSpriteUri = this.toUri(webview, CAT_SPRITE);
@@ -142,11 +172,13 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
       );
     }
 
-    const fallbackUri = character === "cat"
-      ? catSpriteUri
-      : STATIC_CHARS[character]
-        ? this.toUri(webview, STATIC_CHARS[character].idle)
-        : this.toUri(webview, ["media", "characters", "clippy", "static", "idle.png"]);
+    const fallbackUri = communityPack
+      ? (JSON.parse(staticSpritesJson)["idle"] ?? "")
+      : character === "cat"
+        ? catSpriteUri
+        : STATIC_CHARS[character]
+          ? this.toUri(webview, STATIC_CHARS[character].idle)
+          : this.toUri(webview, ["media", "characters", "clippy", "static", "idle.png"]);
 
     return /*html*/ `<!DOCTYPE html>
 <html lang="en">
@@ -323,13 +355,14 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
   <div id="ground"></div>
 
   <script nonce="${nonce}">
-    window.CLIPPY_ANIMATIONS = ${animationsJson};
-    window.CLIPPY_FALLBACK   = "${fallbackUri}";
-    window.CLIPPY_CHARACTER  = "${character}";
-    window.CAT_SPRITE        = "${catSpriteUri}";
-    window.IS_CAT            = ${isCat};
-    window.CHARACTER_MODE    = "${characterMode}";
+    window.CLIPPY_ANIMATIONS   = ${animationsJson};
+    window.CLIPPY_FALLBACK     = "${fallbackUri}";
+    window.CLIPPY_CHARACTER    = "${character}";
+    window.CAT_SPRITE          = "${catSpriteUri}";
+    window.IS_CAT              = ${isCat};
+    window.CHARACTER_MODE      = "${characterMode}";
     window.STATIC_MOOD_SPRITES = ${staticSpritesJson};
+    window.CUSTOM_ANIMATIONS   = ${customAnimationsJson};
   </script>
   <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>

@@ -77,6 +77,23 @@ const COOLDOWN_MS: Record<string, number> = {
   high:    30_000, // 30s
 };
 
+// Default mood to use when a community pack only provides message text (no mood)
+const TRIGGER_DEFAULT_MOODS: Record<string, string> = {
+  save:              "idle",
+  saveStreak5:       "excited",
+  saveStreak10:      "excited",
+  errorsAppeared:    "scared",
+  errorsFixed:       "excited",
+  errorsWhileSaving: "idle",
+  idleReturn:        "idle",
+  sleeping:          "sleeping",
+  longSession30:     "idle",
+  longSession60:     "thinking",
+  longSession90:     "sad",
+  lateNight:         "thinking",
+  switchFile:        "idle",
+};
+
 export class TriggerManager {
   private lastMessageTime = 0;
   private saveCount = 0;
@@ -89,8 +106,21 @@ export class TriggerManager {
   private idleCheckInterval?: NodeJS.Timeout;
   private sessionCheckInterval?: NodeJS.Timeout;
   private sleepTimeout?: NodeJS.Timeout;
+  private customMessages: Record<string, Array<{ text: string; mood: string }>> = {};
 
   constructor(private readonly send: SendMessageFn) {}
+
+  setCustomMessages(raw: Record<string, string[]>): void {
+    this.customMessages = {};
+    for (const [key, texts] of Object.entries(raw)) {
+      const mood = TRIGGER_DEFAULT_MOODS[key] ?? "idle";
+      this.customMessages[key] = texts.map((text) => ({ text, mood }));
+    }
+  }
+
+  clearCustomMessages(): void {
+    this.customMessages = {};
+  }
 
   register(context: vscode.ExtensionContext): void {
     // File save
@@ -207,7 +237,7 @@ export class TriggerManager {
   private fireMessage(key: keyof typeof MESSAGES, skipCooldown = false): void {
     const now = Date.now();
     if (!skipCooldown && now - this.lastMessageTime < this.getCooldown()) { return; }
-    const pool = MESSAGES[key];
+    const pool = this.customMessages[key] ?? MESSAGES[key];
     if (!pool?.length) { return; }
     const pick = pool[Math.floor(Math.random() * pool.length)];
     this.lastMessageTime = now;
