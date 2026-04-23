@@ -2,13 +2,26 @@
   "name": "codechan",
   "displayName": "CodeChan",
   "description": "Your coding companion with personality. Code-Chan lives in your sidebar, reacts to your code with funny, motivational, and sarcastic messages — celebrating wins and calling out your habits.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "syedemad",
   "engines": {
     "vscode": "^1.116.0"
   },
-  "categories": ["Other", "Visualization"],
-  "keywords": ["clippy", "pet", "buddy", "fun", "motivational", "sarcastic", "companion", "ascii", "pixel"],
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "clippy",
+    "pet",
+    "buddy",
+    "fun",
+    "motivational",
+    "sarcastic",
+    "companion",
+    "ascii",
+    "pixel"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/syed-emad/codechan"
@@ -18,7 +31,9 @@
     "color": "#1e1e1e",
     "theme": "dark"
   },
-  "activationEvents": ["onStartupFinished"],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./out/extension/extension.js",
   "contributes": {
     "viewsContainers": {
@@ -90,7 +105,13 @@
       "properties": {
         "code-chan.character": {
           "type": "string",
-          "enum": ["clippy", "cat", "kaen", "ren", "yuki"],
+          "enum": [
+            "clippy",
+            "cat",
+            "kaen",
+            "ren",
+            "yuki"
+          ],
           "enumDescriptions": [
             "Clippy — the classic paperclip assistant",
             "Cool Cat — a pixel cat with sunglasses",
@@ -103,7 +124,11 @@
         },
         "code-chan.messageFrequency": {
           "type": "string",
-          "enum": ["low", "medium", "high"],
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
           "default": "medium",
           "description": "How often Code-Chan sends messages"
         }
