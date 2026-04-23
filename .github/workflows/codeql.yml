@@ -1,0 +1,96 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '0 6 * * 1'
+
+jobs:
+  analyze-javascript:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:javascript-typescript
+
+  analyze-actions:
+    name: Analyze (actions)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Check whether there are any GitHub Actions workflow files or custom
+      # action definitions present in this ref. CodeQL will fail with exit
+      # code 32 ("configuration error") if the `actions` language is
+      # initialised but no analyzable files are found — which happens on PRs
+      # that pre-date the creation of .github/workflows/. This step lets us
+      # skip the CodeQL steps gracefully in that case.
+      - name: Detect GitHub Actions files
+        id: gha
+        shell: bash
+        run: |
+          shopt -s nullglob
+          # Look for workflow files and custom action definitions in the
+          # conventional locations GitHub Actions uses:
+          #   .github/workflows/   — reusable/standard workflows
+          #   action.yml|yaml      — root-level composite/Docker/JS action
+          #   .github/actions/*/   — shared composite actions within a repo
+          files=(
+            .github/workflows/*.yml
+            .github/workflows/*.yaml
+            action.yml
+            action.yaml
+            .github/actions/*/action.yml
+            .github/actions/*/action.yaml
+          )
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "has_actions=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_actions=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Initialize CodeQL
+        # Only run when workflow/action files exist; otherwise CodeQL cannot
+        # extract any sources and finalize fails with a configuration error.
+        if: steps.gha.outputs.has_actions == 'true'
+        uses: github/codeql-action/init@v3
+        with:
+          languages: actions
+
+      - name: Perform CodeQL Analysis
+        if: steps.gha.outputs.has_actions == 'true'
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:actions
+
+      - name: No GitHub Actions files found — skipping analysis
+        # Emit a clear notice so the job still passes and the skip is visible
+        # in the workflow summary instead of silently succeeding.
+        if: steps.gha.outputs.has_actions != 'true'
+        run: echo "::notice::No GitHub Actions workflow or custom-action files found in this ref; skipping CodeQL Actions analysis."
