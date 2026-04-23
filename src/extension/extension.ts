@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { CodeChanViewProvider } from "./providers";
 import { TriggerManager } from "./triggers";
 import { loadCommunityChars, getCharactersDir, CharPack } from "./charLoader";
+import { registerPreviewCommand } from "./preview";
 
 const SIDEBAR_VIEW = "code-chan.sidebar";
 const ACTIVITY_VIEW = "code-chan.activity";
@@ -120,6 +121,9 @@ export function activate(context: vscode.ExtensionContext) {
       vscode.window.showInformationMessage(`Code-Chan: switched to ${selected.label.replace("  ✓", "")}!`);
     })
   );
+
+  // Character pack preview
+  registerPreviewCommand(context, () => communityChars);
 
   // Manual trigger command
   context.subscriptions.push(
