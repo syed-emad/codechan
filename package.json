@@ -11,7 +11,7 @@
   "keywords": ["clippy", "pet", "buddy", "fun", "motivational", "sarcastic", "companion", "ascii", "pixel"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/syedemad/code-chan"
+    "url": "https://github.com/syed-emad/codechan"
   },
   "icon": "media/icon.png",
   "galleryBanner": {
@@ -114,7 +114,9 @@
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "package": "vsce package",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "echo \"No tests yet\" && exit 0",
+    "dev": "node esbuild.mjs --watch",
+    "release": "node esbuild.mjs && vsce package"
   },
   "devDependencies": {
     "@types/vscode": "^1.116.0",
