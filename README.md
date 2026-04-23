@@ -1,81 +1,146 @@
-# Code-Chan Buddy
+# CodeChan
 
-Your coding companion with personality.
+**Turn anyone into your coding buddy.**
 
-Code-Chan lives in your VS Code sidebar and panel, reacts to what you're doing, and drops messages that are equal parts motivational, funny, and sarcastic — celebrating your wins and calling out your habits.
+Got a favourite anime character? A friend? A meme? Drop their images into a folder, write a `character.json`, and they'll live in your VS Code sidebar — reacting to your code, roasting your saves, and celebrating your wins.
 
-## Why Code-Chan Buddy?
+Or just pick one of the ready-made buddies and start in seconds.
 
-Most coding companions are cute but passive. Code-Chan actually reacts to what's happening in your editor.
+---
 
-Fix all your errors? It goes wild. Save 10 times in a row? It notices. Coding past midnight? It has opinions.
+## Your Coding Buddy, Your Way
 
-It reacts to real editor events:
-- Frequent saves and save streaks
-- Errors appearing and getting fixed
-- Long coding sessions (30 / 60 / 90 min check-ins)
-- Late-night coding
-- File switching
-- Idle / return detection with sleep mode
+CodeChan lives in your VS Code sidebar and panel. It watches what you're doing and reacts — saves, errors, long sessions, late nights, idle streaks. Every buddy has a personality: some are optimistic and hype you up, others are sarcastic and ruthless.
 
-The result is a companion that feels alive, not static.
+The difference from other companions: **you bring the character**. Any pixel art character can become your buddy. All you need is a few PNGs and a JSON file.
+
+---
+
+## Ready-Made Buddies
+
+Five characters included, no setup needed:
+
+| Character | Vibe |
+|-----------|------|
+| **Clippy** | The classic — fully animated, nostalgic energy |
+| **Cool Cat** | Laid-back pixel cat with sunglasses |
+| **Kaen** | Fierce anime companion |
+| **Ren** | Cool and collected |
+| **Yuki** | Quiet and thoughtful |
+
+Switch between them instantly from the panel title bar.
+
+---
+
+## Bring Your Own Character
+
+This is the main feature. Drop any character into CodeChan using a simple folder structure:
+
+```
+~/.vscode/code-chan/characters/
+  my-buddy/
+    character.json
+    idle.png
+    happy.png
+    sad.png
+    excited.png
+    thinking.png
+    talking.png
+```
+
+A minimal `character.json`:
+
+```json
+{
+  "id": "my-buddy",
+  "name": "My Buddy",
+  "author": "you",
+  "description": "My custom coding companion",
+  "version": "1.0.0",
+  "emotions": ["idle", "happy", "sad", "excited", "thinking", "talking"],
+  "animations": {
+    "idle":     { "fps": 4, "frames": ["idle","idle","idle","thinking","idle"] },
+    "excited":  { "fps": 8, "frames": ["excited","happy","excited","excited"] },
+    "sad":      { "fps": 4, "frames": ["sad","sad","idle","sad","sad"] },
+    "thinking": { "fps": 2, "frames": ["thinking","thinking","thinking"] },
+    "talking":  { "fps": 8, "frames": ["idle","talking","idle","talking"] },
+    "happy":    { "fps": 6, "frames": ["happy","excited","happy","idle"] }
+  },
+  "messages": {
+    "save":           ["Your message when file is saved"],
+    "errorsAppeared": ["Your message when errors appear"],
+    "errorsFixed":    ["Your message when errors are fixed"],
+    "lateNight":      ["Your late night message"]
+  }
+}
+```
+
+Reload VS Code — your character shows up in the picker under **Community Packs**.
+
+Full guide: [CHARACTER_PACK_GUIDE.md](CHARACTER_PACK_GUIDE.md)
+
+---
+
+## What It Reacts To
+
+| Trigger | When |
+|---------|------|
+| Save | Every file save |
+| Save streak | Every 5th and 10th save in a row |
+| Errors appeared | First time errors show up |
+| Errors fixed | Error count drops to zero |
+| Idle return | Coming back after 3+ min away |
+| Long session | 30, 60, and 90 minute check-ins |
+| Late night | Coding between 11pm and 4am |
+| File switch | Changing the active file |
+| Sleep | Falls asleep after 3 min idle |
+
+---
 
 ## Features
 
-- **5 characters** — Clippy, Cool Cat, Kaen, Ren, Yuki
-- **Multi-character support** — show multiple buddies side by side at once
-- **Smart event triggers** — reacts to saves, errors, streaks, idle, session length, time of day
-- **Mixed tone** — motivational when you need it, sarcastic when you deserve it
-- **Adjustable frequency** — low / medium / high message rate
-- **Two surfaces** — sidebar and bottom panel
-- **Quick picker** — add or swap characters from the panel title bar
-- **Status bar shortcut** — instant message on demand
+- **Bring your own character** — any PNG images + `character.json`
+- **Custom messages** — give each character their own voice per trigger
+- **Custom animations** — define fps and frame sequences in JSON
+- **5 built-in characters** — ready to use out of the box
+- **Preview command** — see all animations live before switching
+- **Sidebar + bottom panel** — always visible wherever you work
+- **Adjustable message frequency** — low / medium / high
 
-## Characters
-
-- **Clippy** — the classic paperclip assistant, fully animated
-- **Cool Cat** — pixel cat with sunglasses and CSS animations
-- **Kaen** — anime companion with 6 emotion sprites
-- **Ren** — anime companion with 6 emotion sprites
-- **Yuki** — anime companion with 6 emotion sprites
+---
 
 ## Commands
 
-- **Code-Chan: Show Message** — manually trigger a random message
-- **Select Character** — open the multi-select character picker
+- **Code-Chan: Show Message** — manually trigger a message
+- **Select Character** — switch characters or open your characters folder
+- **Code-Chan: Preview Character Pack** — preview a community pack's animations
 
-## Extension Settings
+## Settings
 
-- `code-chan.characters` — array of characters to show (pick multiple)
-  - Options: `clippy`, `cat`, `kaen`, `ren`, `yuki`
-  - Default: `["clippy"]`
-- `code-chan.messageFrequency` — how often messages appear
-  - Options: `low`, `medium`, `high`
-  - Default: `medium`
+- `code-chan.character` — active character id
+- `code-chan.messageFrequency` — `low` / `medium` / `high`
 
-## How It Works
-
-Code-Chan listens to VS Code activity signals and posts contextual messages to its webview. A cooldown system prevents spam while milestone events (errors fixed, streaks, session length) always break through.
+---
 
 ## Privacy
 
-Code-Chan does not send your code anywhere. Everything happens locally in your editor.
+CodeChan runs entirely locally. It never sends your code or activity anywhere.
+
+---
 
 ## Release Notes
 
 ### 0.1.1
-
-- Multi-character support — show multiple buddies side by side
-- Added Kaen, Ren, Yuki anime characters
-- Multi-select character picker
+- Community character pack system — bring any character via `character.json`
+- Preview panel for community packs
+- Auto-creates characters folder on first launch
+- Added Kaen, Ren, Yuki anime companions
 
 ### 0.1.0
+- Initial release — Clippy and Cool Cat, event-driven messages, sidebar + panel
 
-- Initial release
-- Animated Clippy and Cool Cat companions
-- Event-driven message system
-- Sidebar and panel support
+---
 
-## Feedback
+## Feedback & Characters
 
-Have ideas, message packs, or character suggestions? Open an issue in the repo.
+Built a cool character pack? Found a bug? Open an issue at [github.com/syed-emad/codechan](https://github.com/syed-emad/codechan).
