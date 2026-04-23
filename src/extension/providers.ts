@@ -139,7 +139,8 @@ export class CodeChanViewProvider implements vscode.WebviewViewProvider {
       customAnimationsJson = JSON.stringify(communityPack.animations);
       const sprites: Record<string, string> = {};
       for (const emotion of communityPack.emotions) {
-        const imgPath = path.join(communityPack.dir, `${emotion}.png`);
+        const imgPath = path.resolve(communityPack.dir, `${emotion}.png`);
+        if (!imgPath.startsWith(communityPack.dir + path.sep)) { continue; }
         if (fs.existsSync(imgPath)) {
           sprites[emotion] = this.toFileUri(webview, imgPath);
         }

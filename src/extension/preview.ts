@@ -71,9 +71,11 @@ function openPreviewPanel(context: vscode.ExtensionContext, pack: CharPack): voi
 
 function buildPreviewHtml(webview: vscode.Webview, pack: CharPack): string {
   // Resolve emotion PNG URIs — skip emotions with no file on disk
+  // Defense-in-depth: verify resolved path stays within pack.dir
   const spriteUris: Record<string, string> = {};
   for (const emotion of pack.emotions) {
-    const imgPath = path.join(pack.dir, `${emotion}.png`);
+    const imgPath = path.resolve(pack.dir, `${emotion}.png`);
+    if (!imgPath.startsWith(pack.dir + path.sep)) { continue; }
     if (fs.existsSync(imgPath)) {
       spriteUris[emotion] = webview.asWebviewUri(vscode.Uri.file(imgPath)).toString();
     }
