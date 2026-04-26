@@ -143,6 +143,9 @@
     "dev": "node esbuild.mjs --watch",
     "release": "node esbuild.mjs && vsce package"
   },
+  "overrides": {
+    "uuid": ">=14.0.0"
+  },
   "devDependencies": {
     "@types/vscode": "^1.116.0",
     "@vscode/vsce": "^3.9.1",
